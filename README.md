@@ -31,11 +31,11 @@ As our logo hints, StickTock is a “band aid” solution. We can’t promise it
 
 ### Configuration
 
-### Prerequisits
+### Prerequisites
 
 You need docker installed and set into swarm mode. All build tools are located in the images, so you don't really need any local tooling for infrequent changes. Read `Dockerfile` and `package.json` files for scripts that build, run, and run-in-dev mode given code.
 
-### Your own domains
+### Domains
 
 The `frontend` next.js web app needs explicit information about its own domain and the domain of the API server.
 
@@ -49,22 +49,13 @@ The backend service can work with frontends from different domains.
 
 The docker stack/compose file `docker-swarm-stack.yml` shows that `backend-api` needs a mounted volume for its internal data location `/var/local/sticktock/`. You can use bind, like it is used now, or some other volume. If mount fails `docker stack deploy` may not be verbose about errors, so be sure to check `docker service ls`.
 
-## Building and running
+## Building &amp; Running
 
 Use `reload-stack.sh --build-webapp --build-app`. If one of the images doesn't need to be recreated anew, skip the respective flag.
 
 The generic form of the stack file uses `latest` images, but run labels images with date and time to be able to rollback manually.
 
 To stop stack, do the usual `docker stack rm sticktock`.
-
-## License
-
-This project is licensed under the GNU AGPLv3 License
-
-## Credits
-
-This repository is based code from separate [frontend](https://github.com/PrivacySafe/original-sticktock) and [backend](https://github.com/PrivacySafe/original-sticktock-api) repositories, forked from respective offtiktok repositories.
-
 
 ## License
 © 2025-present PrivacySafe Services LLC. This project is dedicated to ethical <a href="https://fsf.org" target="_blank" rel="noreferrer noopener">Free and Open Source Software</a> and <a href="https://oshwa.org" target="_blank" rel="noreferrer noopener">Open Source Hardware</a>. PrivacySafe® is a registered trademark.
