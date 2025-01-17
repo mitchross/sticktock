@@ -45,7 +45,7 @@ Incorrect domains will give you unpleasant debugging.
 
 The backend service can work with frontends from different domains.
 
-### Data folder on backend
+### Data Folder on Backend
 
 The docker stack/compose file `docker-swarm-stack.yml` shows that `backend-api` needs a mounted volume for its internal data location `/var/local/sticktock/`. You can use bind, like it is used now, or some other volume. If mount fails `docker stack deploy` may not be verbose about errors, so be sure to check `docker service ls`.
 
@@ -60,7 +60,7 @@ To stop stack, do the usual `docker stack rm sticktock`.
 ## License
 © 2025-present PrivacySafe Services LLC. This project is dedicated to ethical <a href="https://fsf.org" target="_blank" rel="noreferrer noopener">Free and Open Source Software</a> and <a href="https://oshwa.org" target="_blank" rel="noreferrer noopener">Open Source Hardware</a>. PrivacySafe® is a registered trademark.
 
-Released under the [GNU AGPLv3 License](LICENSE). See [LICENSE](LICENSE) for more information. PrivacySafe Link is modified from [offtiktok](https://github.com/MarsHeer/offtiktok) and [offtiktokapi](https://github.com/MarsHeer/offtiktokapi) released under the MIT/Expat License by MarsHeer.
+Released under the [GNU AGPLv3 License](LICENSE). See [LICENSE](LICENSE) for more information. StickTock is modified from [offtiktok](https://github.com/MarsHeer/offtiktok) and [offtiktokapi](https://github.com/MarsHeer/offtiktokapi) released under the MIT/Expat License by MarsHeer.
 
 ### Disclaimer of Warranty.
 
