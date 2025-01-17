@@ -91,23 +91,28 @@ export const HomePage = () => {
         </button>
       </form>
 
-      <p className="articulat text-sm my-5 text-blue">
+      <p className="articulat text-sm my-5 text-blue text-center margin-bottom-48">
         {loading
           ? 'Processing video, this could take a minute...'
           : [ `Or replace "tiktok.com" with "${BASE_DOMAIN}" in your video URL.` ]}
         &nbsp;&nbsp;
         <a
-          href="https://psafe.ly/QX9P9K"
+          href="https://psafe.ly/e3sneh
+          "
           target="_blank"
-          className="link-orange no-text-wrap"
-        >Learn More</a>
+          className="link-orange"
+        >How?</a>
       </p>
 
       {error && <p className="text-red-500 text-sm my-5">{error}</p>}
 
       <div className="w-full flex flex-col items-center mb-14">
         <h2 className="seasons text-xl text-white mb-3">
-          100% Open Source TikTok Experiment
+        100% Free & Open Source. <a
+          href="https://psafe.ly/e3sneh"
+          target="_blank"
+          className="link-orange"
+        >Why?</a>
         </h2>
 
         <div className="grid grid-flow-col gap-5 w-full px-2">
@@ -138,7 +143,7 @@ export const HomePage = () => {
       </div>
 
       <div
-        className="text-align-center text-blue"
+        className="text-align-center text-blue margin-bottom-12"
       >
         Made with <span style={{
           color: 'red'
@@ -147,8 +152,16 @@ export const HomePage = () => {
           target="_blank"
           className="link-orange"
         >PrivacySafe</a>
-        <br />
+      </div>
+
+      <div
+        className="text-align-center text-blue"
+      >
         <a
+          href="https://psafe.ly/KQ9XH8"
+          target="_blank"
+          className="link-orange"
+        >GNU AGPLv3</a> | <a
           href="https://psafe.ly/xnUPwZ"
           target="_blank"
           className="link-orange"
@@ -157,10 +170,14 @@ export const HomePage = () => {
           target="_blank"
           className="link-orange"
         >Terms of Use</a> | <a
-          href="https://psafe.ly/A3NU4b"
+          href="https://psafe.ly/NLQHf2"
           target="_blank"
           className="link-orange"
-        >Donate</a>
+        >Donate</a> | <a
+        href="https://psafe.ly/A3NU4b"
+        target="_blank"
+        className="link-orange no-text-wrap"
+      >Buy Us a Coffee</a>
       </div>
 
     </div>

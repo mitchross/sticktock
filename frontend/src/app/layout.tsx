@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title:
-    "StickTock | Watch TikToks Safely",
+    "StickTock | Share TikToks Safely. No Ads, No Spying, No Phone App.",
   description:
     "StickTock",
 };

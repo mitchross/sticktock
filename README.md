@@ -29,7 +29,7 @@ To stop stack, do usual `docker stack rm sticktock`.
 
 ## License
 
-This project is licensed under the MIT License
+This project is licensed under the GNU AGPLv3 License
 
 ## Credits
 
