@@ -216,8 +216,7 @@ export const Carousel: FC<Props> = ({
           </div>
         ))}
       </div>
-      <a
-        href={`https://tiktok.com/@${handle}`}
+      <span
         className="absolute bottom-16 right-5 rounded-full overflow-hidden z-50 border-white border-2"
       >
         <div className="relative w-10 h-10">
@@ -231,7 +230,7 @@ export const Carousel: FC<Props> = ({
             src={profilePic}
           />
         </div>
-      </a>
+      </span>
       <a className="absolute bottom-5 right-6 z-50">
         <PostOptions setAlert={setAlert} />
       </a>
@@ -239,9 +238,9 @@ export const Carousel: FC<Props> = ({
       <div className="flex flex-col items-start z-40 absolute bottom-5 left-5 right-20">
         <p className="seasons text-white text-xs text-left mb-1.5">
           From{' '}
-          <a className="underline" href={`https://tiktok.com/@${handle}`}>
+          <span className="underline">
             {username}
-          </a>{' '}
+          </span>{' '}
           on TikTok
         </p>
         {description ? (

@@ -69,17 +69,17 @@ export async function generateMetadata(
     } else {
       return {
         title:
-          "OffTikTok | Share TikToks with anyone, even if they don't have the app.",
+          "StickTock | Share TikToks Safely. No Ads, No Spying, No Phone App.",
         description:
-          "OffTikTok lets you share TikToks with anyone, even if they don't have the app. Just paste the link and share it with your friends. Watch Tiktoks without ads, apps or geo-restrictions",
+        "StickTock",
       };
     }
   } catch {
     return {
       title:
-        "OffTikTok | Share TikToks with anyone, even if they don't have the app.",
+        "StickTock | Share TikToks Safely. No Ads, No Spying, No Phone App.",
       description:
-        "OffTikTok lets you share TikToks with anyone, even if they don't have the app. Just paste the link and share it with your friends. Watch Tiktoks without ads, apps or geo-restrictions",
+      "StickTock",
     };
   }
 }

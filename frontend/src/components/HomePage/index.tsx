@@ -5,6 +5,8 @@ import { LoadingSpinner } from '../Loading';
 import { checkURL } from '../../../utils/strings/check-url';
 import { BACKEND_API_URL, BASE_DOMAIN } from '../../../service.config';
 
+const ONION_HOST = 'b7vypdv52igjfg7vwhlofny45koaa4ltletx67ranlwfotiiqwza2eyd.onion';
+
 export const HomePage = () => {
   const [videoURL, setVideoURL] = useState('');
   const [error, setError] = useState('');
@@ -142,7 +144,7 @@ export const HomePage = () => {
       </div>
 
       <div
-        className="text-align-center text-blue"
+        className="text-align-center text-blue margin-bottom-32"
       >
         <a
           href="https://psafe.ly/KQ9XH8"
@@ -165,6 +167,15 @@ export const HomePage = () => {
         target="_blank"
         className="link-orange no-text-wrap"
       >Buy Us a Coffee</a>
+      </div>
+
+      <div
+        className="text-align-center text-sm my-5 text-blue"
+      >
+        <a
+          href={`http://${ONION_HOST}/`}
+          target="_blank"
+        >{ONION_HOST}</a>
       </div>
 
     </div>
