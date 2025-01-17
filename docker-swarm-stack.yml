@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+
+  frontend-nextjs:
+    image: sticktock-webapp
+    ports:
+      - '3000:3000'
+  
+  backend-api:
+    image: sticktock-api
+    ports:
+      - '2000:2000'
+    volumes:
+      - /var/local/sticktock-api-data:/var/local/sticktock/
