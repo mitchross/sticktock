@@ -35,20 +35,6 @@ body {
   text-align: center;
 }
 
-/* 
-.seasons {
-  font-family: 'the-seasons', sans-serif;
-}
-
-.henriette {
-  font-family: henriette, sans-serif;
-}
-
-.articulat {
-  font-family: 'articulat-cf', sans-serif;
-}
-*/
-
 .green-gradient {
   --tw-gradient-to: #22C55E var(--tw-gradient-to-position);
   --tw-gradient-from: #21A250 var(--tw-gradient-from-position);
@@ -62,6 +48,10 @@ body {
 
 .margin-bottom-12 {
   margin-bottom: 12px;
+}
+
+.margin-bottom-32 {
+  margin-bottom: 32px;
 }
 
 .margin-bottom-48 {

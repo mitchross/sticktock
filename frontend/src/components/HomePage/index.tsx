@@ -9,7 +9,6 @@ export const HomePage = () => {
   const [videoURL, setVideoURL] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  // const [showPopUp, setShowPopUp] = useState(false);
   const getVideo: FormEventHandler<HTMLFormElement> = useCallback(
     async (e) => {
       try {
@@ -107,25 +106,13 @@ export const HomePage = () => {
       {error && <p className="text-red-500 text-sm my-5">{error}</p>}
 
       <div className="w-full flex flex-col items-center mb-14">
-        <h2 className="seasons text-xl text-white mb-3">
+        <h2 className="seasons text-xl text-white mb-3 margin-bottom-32">
         100% Free & Open Source. <a
           href="https://psafe.ly/e3sneh"
           target="_blank"
           className="link-orange"
         >Why?</a>
         </h2>
-
-        <div className="grid grid-flow-col gap-5 w-full px-2">
-          <div className="articulat text-sm text-white text-left">
-            No Ads
-          </div>
-          <div className="articulat text-sm text-white text-center">
-          &nbsp;&nbsp;&nbsp;No Spying
-          </div>
-          <div className="articulat text-sm text-white text-right">
-            No Phone App
-          </div>
-        </div>
 
         <button
           onClick={async () => {

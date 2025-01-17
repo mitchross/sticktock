@@ -9,7 +9,7 @@ One needs docker installed, set into swarm mode. All build tools are located in 
 ### Your own domains
 
 `frontend` next.js web app needs explicit information about it's own domain, and domain of api server.
-These values must be set in `frontend/service.config.ts` and `frontend/next.config.mjs`.
+These values must be set in `frontend/service.config.ts`.
 Incorrect domains give you unpleasant debugging.
 
 Backend service can work with frontends from different domains.
