@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://sticktock.com"><img src="sticktock-wordmark.svg" width="500" height="500" /></a>
+  <a href="https://sticktock.com"><img src="sticktock-wordmark.svg" width="500" height="auto" /></a>
 </p>
 
 # StickTock &ndash; Share TikToks Safely. No Ads, No Spying, No Phone App.
