@@ -10,10 +10,14 @@ StickTock is 100% free and open source software (FOSS) developed by privacy advo
 
 [![liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/PrivacySafe/donate)
 
-## Announcement
+## Alpha Release Announcement
 
 * [January 17, 2025 Announcement of StickTock.com](
 https://bitsontape.com/sticktock-share-tiktok-videos)
+
+### Known Issues
+* **Links that go out to TikTok.com: ** Non-video links still persist in the UI that go out to tiktok.com  These links, for example to user profiles, will probably never work in StickTock.com  We are working on an intermediary warning screen.
+
 
 ## Features
 
