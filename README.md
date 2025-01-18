@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://sticktock.com"><img src="sticktock-wordmark.svg" width="500" height="auto" /></a>
+  <a href="https://sticktock.com"><img src="./sticktock-logos/sticktock-wordmark.svg" width="500" height="auto" /></a>
 </p>
 
 # StickTock &ndash; Share TikToks Safely. No Ads, No Spying, No Phone App.
@@ -14,9 +14,6 @@ StickTock is 100% free and open source software (FOSS) developed by privacy advo
 
 * [January 17, 2025 Announcement of StickTock.com](
 https://bitsontape.com/sticktock-share-tiktok-videos)
-
-### Known Issues
-* [**TikTok.com links persist in UI**](https://github.com/PrivacySafe/sticktock/issues/2)
 
 ## Features
 
