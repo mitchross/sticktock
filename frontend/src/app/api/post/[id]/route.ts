@@ -3,7 +3,7 @@ import { parse, serialize } from 'cookie';
 import crypto from 'crypto';
 import { postSchema } from '../../../../../utils/types/posts';
 import { NextRequest } from 'next/server';
-import { BACKEND_API_URL, FRONTEND_NEXT_INTERNAL_URL } from '../../../../../service.config';
+import { API_URL_FOR_SERVER, FRONTEND_URL_FOR_BROWSER } from '../../../../../service.config';
 
 function generateSessionToken(length = 32) {
   return crypto.randomBytes(length).toString('hex');
@@ -24,23 +24,17 @@ export async function GET(
       'Set-Cookie',
       serialize('SessionToken', sessionToken, {
         httpOnly: true,
-        secure: FRONTEND_NEXT_INTERNAL_URL.startsWith('https:'),
+        secure: FRONTEND_URL_FOR_BROWSER.startsWith('https:'),
         maxAge: 60 * 60 * 24 * 7, // 1 week
         path: '/',
       })
     );
   }
-  console.log({
-    fetching: `${BACKEND_API_URL}/by_id/${id}`,
-  });
   const fetchData = await fetch(
-    `${BACKEND_API_URL}/by_id/${id}`
+    `${API_URL_FOR_SERVER}/by_id/${id}`
   );
 
   const jsonData = await fetchData.json();
-  console.log({
-    jsonData,
-  });
   const parsedData = postSchema.safeParse(jsonData);
 
   if (!parsedData.success) {

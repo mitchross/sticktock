@@ -13,7 +13,7 @@ import { Carousel } from '../Carousel';
 import { VideoPlayer } from '../VideoPlayer';
 import styles from './style.module.scss';
 import clsx from 'clsx';
-import { BACKEND_API_URL } from '../../../service.config';
+import { API_URL_FOR_BROWSER } from '../../../service.config';
 
 type Props = {
   rootPost: z.infer<typeof postSchema>;
@@ -49,7 +49,7 @@ export const Feed: FC<Props> = ({ rootPost, token }) => {
         }
 
         const fetchData = await fetch(
-          `${BACKEND_API_URL}/get_related/${encodeURIComponent(
+          `${API_URL_FOR_BROWSER}/get_related/${encodeURIComponent(
             url
           )}`,
           {
@@ -150,20 +150,20 @@ export const Feed: FC<Props> = ({ rootPost, token }) => {
         >
           {post.video ? (
             <VideoPlayer
-              mp4URL={`${BACKEND_API_URL}${post.video?.mp4URL}`}
+              mp4URL={`${API_URL_FOR_BROWSER}${post.video?.mp4URL}`}
               hlsURL={
                 post.video?.hlsURL
-                  ? `${BACKEND_API_URL}${post.video?.hlsURL}`
+                  ? `${API_URL_FOR_BROWSER}${post.video?.hlsURL}`
                   : undefined
               }
               thumbnail={
                 post.video?.thumbnail
-                  ? `${BACKEND_API_URL}${post.video?.thumbnail}`
+                  ? `${API_URL_FOR_BROWSER}${post.video?.thumbnail}`
                   : undefined
               }
               username={post.author.name}
               handle={post.author.handle}
-              profilePic={`${BACKEND_API_URL}${post.author.image}`}
+              profilePic={`${API_URL_FOR_BROWSER}${post.author.image}`}
               description={post.postDescription}
               feedEl={feedEl}
               postId={post.id}
@@ -171,15 +171,15 @@ export const Feed: FC<Props> = ({ rootPost, token }) => {
           ) : (
             <Carousel
               feedEl={feedEl}
-              audio={`${BACKEND_API_URL}${post.carousel?.audio}`}
+              audio={`${API_URL_FOR_BROWSER}${post.carousel?.audio}`}
               username={post.author.name}
               handle={post.author.handle}
-              profilePic={`${BACKEND_API_URL}${post.author.image}`}
+              profilePic={`${API_URL_FOR_BROWSER}${post.author.image}`}
               description={post.postDescription}
               postId={post.id}
               images={post.carousel?.images
                 .split(',')
-                .map((img) => `${BACKEND_API_URL}${img}`)}
+                .map((img) => `${API_URL_FOR_BROWSER}${img}`)}
             />
           )}
         </div>

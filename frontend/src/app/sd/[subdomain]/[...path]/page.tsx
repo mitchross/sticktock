@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { postSchema } from '../../../../../utils/types/posts';
 import { Metadata, ResolvingMetadata } from 'next';
-import { BACKEND_API_URL } from '../../../../../service.config';
+import { API_URL_FOR_SERVER, API_URL_FOR_BROWSER } from '../../../../../service.config';
 
 export async function generateMetadata(
   {
@@ -27,7 +27,7 @@ export async function generateMetadata(
     }, 1000 * 5);
 
     const fetchData = await fetch(
-      `${BACKEND_API_URL}/by_url/${encodeURIComponent(
+      `${API_URL_FOR_SERVER}/by_url/${encodeURIComponent(
         constructedURL
       )}`,
       {
@@ -49,7 +49,7 @@ export async function generateMetadata(
         description: data?.postDescription || undefined,
         openGraph: image
           ? {
-              images: [`${BACKEND_API_URL}${image}`],
+              images: [`${API_URL_FOR_BROWSER}${image}`],
             }
           : undefined,
         creator: data?.author.handle,
@@ -79,7 +79,7 @@ const fetchPostData = async (url: string): Promise<void> => {
   let id: number | null = null;
   try {
     const response = await fetch(
-      `${BACKEND_API_URL}/by_url/${encodeURIComponent(url)}`
+      `${API_URL_FOR_SERVER}/by_url/${encodeURIComponent(url)}`
     );
     if (!response.ok) {
       console.error('Network response was not ok:', response.statusText);

@@ -1,4 +1,7 @@
 export const BASE_DOMAIN = 'example.com';
 
-export const BACKEND_API_URL = `https://api.${BASE_DOMAIN}`;
-export const FRONTEND_NEXT_INTERNAL_URL = `https://www.${BASE_DOMAIN}`;
+export const FRONTEND_URL_FOR_BROWSER = `https://www.${BASE_DOMAIN}`;
+export const FRONTEND_URL_FOR_SERVER_SELF = `http://localhost:3000`;
+
+export const API_URL_FOR_BROWSER = `https://api.${BASE_DOMAIN}`;
+export const API_URL_FOR_SERVER = `http://example.api.internal:2000`;

@@ -5,11 +5,11 @@ import { redirect } from 'next/navigation';
 import { postSchema } from '../../../../utils/types/posts';
 import { Feed } from '../../../components/Feed';
 import styles from './page.module.scss';
-import { BACKEND_API_URL, FRONTEND_NEXT_INTERNAL_URL } from '../../../../service.config';
+import { API_URL_FOR_BROWSER, API_URL_FOR_SERVER, FRONTEND_URL_FOR_SERVER_SELF } from '../../../../service.config';
 
 const fetchPostData = async (id: string) => {
   const fetchData = await fetch(
-    `${FRONTEND_NEXT_INTERNAL_URL}/api/post/${id}`
+    `${FRONTEND_URL_FOR_SERVER_SELF}/api/post/${id}`
   );
   const jsonData = await fetchData.json();
   const parsedData = postSchema.safeParse(jsonData);
@@ -41,7 +41,7 @@ export async function generateMetadata(
     }, 1000 * 5);
 
     const fetchData = await fetch(
-      `${BACKEND_API_URL}/by_id/${params.id}`,
+      `${API_URL_FOR_SERVER}/by_id/${params.id}`,
       {
         signal: controller.signal,
       }
@@ -58,7 +58,7 @@ export async function generateMetadata(
         description: data?.postDescription || undefined,
         openGraph: image
           ? {
-              images: [`${BACKEND_API_URL}${image}`],
+              images: [`${API_URL_FOR_BROWSER}${image}`],
             }
           : undefined,
         creator: data?.author.handle,

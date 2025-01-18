@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation';
-import { BACKEND_API_URL } from '../../../service.config';
+import { API_URL_FOR_SERVER } from '../../../service.config';
 
 const proccess = async (catchAll: string[]) => {
   try {
     const buildUrl = `https://tiktok.com/${catchAll.join('/')}`;
 
     const getData = await fetch(
-      `${BACKEND_API_URL}/by_url/${encodeURIComponent(
+      `${API_URL_FOR_SERVER}/by_url/${encodeURIComponent(
         buildUrl
       )}`
     );
