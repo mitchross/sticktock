@@ -98,8 +98,7 @@ export const HomePage = () => {
           : [ `Or replace "tiktok.com" with "${BASE_DOMAIN}" in your video URL.` ]}
         &nbsp;&nbsp;
         <a
-          href="https://psafe.ly/e3sneh
-          "
+          href="https://bitsontape.com/p/sticktock-share-tiktok-videos"
           target="_blank"
           className="link-orange"
         >How?</a>
@@ -110,7 +109,7 @@ export const HomePage = () => {
       <div className="w-full flex flex-col items-center mb-14">
         <h2 className="seasons text-xl text-white mb-3 margin-bottom-32">
         100% Free & Open Source. <a
-          href="https://psafe.ly/e3sneh"
+          href="https://bitsontape.com/p/sticktock-share-tiktok-videos"
           target="_blank"
           className="link-orange"
         >Why?</a>
@@ -137,7 +136,7 @@ export const HomePage = () => {
         Made with <span style={{
           color: 'red'
         }}>❤️</span> by <a
-          href="https://psafe.ly/Nx4A3m"
+          href="https://privacysafe.social"
           target="_blank"
           className="link-orange"
         >PrivacySafe</a>
@@ -147,23 +146,23 @@ export const HomePage = () => {
         className="text-align-center text-blue margin-bottom-32"
       >
         <a
-          href="https://psafe.ly/KQ9XH8"
+          href="https://github.com/PrivacySafe/sticktock/blob/main/LICENSE"
           target="_blank"
           className="link-orange"
         >GNU AGPLv3</a> | <a
-          href="https://psafe.ly/xnUPwZ"
+          href="https://github.com/PrivacySafe/sticktock"
           target="_blank"
           className="link-orange"
         >Source Code</a> | <a
-          href="https://psafe.ly/DVm2pY"
+          href="https://privacysafe.tools/terms/sticktock-com.html"
           target="_blank"
           className="link-orange"
         >Terms of Use</a> | <a
-          href="https://psafe.ly/NLQHf2"
+          href="https://liberapay.com/PrivacySafe/"
           target="_blank"
           className="link-orange"
         >Donate</a> | <a
-        href="https://psafe.ly/A3NU4b"
+        href="https://ko-fi.com/privacysafe"
         target="_blank"
         className="link-orange no-text-wrap"
       >Buy Us a Coffee</a>

@@ -6,18 +6,14 @@
 
 StickTock is 100% free and open source software (FOSS) developed by privacy advocates. StickTock allows users to view, share, and download TikTok videos without exposing themselves to invasive tracking. Anyone with a web browser can now watch TikToks while protecting their privacy: [StickTock.com](https://sticktock.com)
 
-[![liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/PrivacySafe/donate)
-
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R1194HN7)
 
-_"If you're an American (or anyone else, for that matter) who wants to use Tiktok without being spied on, PrivacySafe has you covered: their StickTock tool is a private, alternative, web-based front-end for Tiktok, with optional Tor VPN tunnelling. As PrivacySafe's Sean O'Brien explains, StickTock is an free/open utility that's dead easy to use. Just change the URL of any Tiktok video from tiktok.com/whatever to sticktock.com/whatever, and you're have a private viewing experience that easily penetrates the Great Firewall of America. O'Brien – founder of the Yale Privacy Lab – writes that PrivacySafe built this because they wanted to help Americans continue to access the great volume of speech on Tiktok, and because they knew that Americans would be using ad-supported, spyware-riddled VPNs to evade the Great Firewall."_ - [Cory Doctorow, Author &amp; Activist](https://privacysafe.social/@pluralistic@mamot.fr/113850616524854958)
+[![liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/PrivacySafe/donate)
 
 ## Alpha Release Announcement
 
 * [January 17, 2025 Announcement of StickTock.com](
 https://bitsontape.com/sticktock-share-tiktok-videos)
-
-* [January 18, 2025 Highlight in Cory Doctorow's Pluralistic.net](https://privacysafe.social/@pluralistic@mamot.fr/113850616524854958)
 
 ## Features
 
