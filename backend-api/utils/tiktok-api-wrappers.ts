@@ -92,10 +92,26 @@ export const parseTikTokData = async (res: Response) => {
   };
 };
 
+const BASE_DOMAINS_WHITELIST = [
+  'tiktok.com', 'tiktokcdn.com', 'tiktokcdn-eu.com'
+];
+
+function throwIfBaseDomainIsNotInWhitelist(url: URL): void {
+  for (let i=0; i<BASE_DOMAINS_WHITELIST.length; i+=1) {
+    if (url.host.endsWith(BASE_DOMAINS_WHITELIST[i])) {
+      return;
+    }
+  }
+  const errMsg = `Refuse to fetch ${url.href}`;
+  console.log(errMsg);
+  throw new Error(errMsg);
+}
+
 export const fetchAndFollowURL = async (url: string) => {
   const controller = new AbortController();
   const decodeURI = decodeURIComponent(url);
   let parsedURL = new URL(url);
+  throwIfBaseDomainIsNotInWhitelist(parsedURL);
   setTimeout(() => {
     controller.abort();
   }, 1000 * 5);
