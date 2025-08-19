@@ -11,6 +11,10 @@ const fetchPostData = async (id: string) => {
   const fetchData = await fetch(
     `${FRONTEND_URL_FOR_SERVER_SELF}/api/post/${id}`
   );
+  
+  // DEBUG
+  console.log(`...post/[id] returns ${fetchData.status} in call to ${fetchData.url}`);
+
   const jsonData = await fetchData.json();
   const parsedData = postSchema.safeParse(jsonData);
 
@@ -52,15 +56,26 @@ export async function generateMetadata(
     if (data && ('video' in data || 'carousel' in data) && 'author' in data) {
       const image =
         data?.video?.thumbnail || data?.carousel?.images.split(',')[0];
+      const video = data?.video?.mp4URL;
 
       return {
-        title: `Watch ${data?.author.name}'s video off TikTok`,
+        title: `Watch ${data?.author.name}'s video via StickTock`,
         description: data?.postDescription || undefined,
-        openGraph: image
-          ? {
-              images: [`${API_URL_FOR_BROWSER}${image}`],
-            }
-          : undefined,
+        openGraph: {
+          siteName: 'StickTock',
+          title: `Watch ${data?.author.name}'s video via StickTock`,
+          description: data?.postDescription || undefined,
+          type: 'video.other',
+          locale: 'en_US',
+          images: image ? [`${API_URL_FOR_BROWSER}${image}`] : undefined,
+          videos: video ? [ {
+            url: `${API_URL_FOR_BROWSER}${video}`,
+            secureUrl: `${API_URL_FOR_BROWSER}${video}`,
+            width: 1080,
+            height: 1920,
+            type: 'video/mp4',
+          } ]: undefined,
+        },
         creator: data?.author.handle,
         twitter: {
           card: 'summary_large_image',

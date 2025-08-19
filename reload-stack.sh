@@ -36,4 +36,4 @@ sleep 5
 
 echo
 echo "🏁 starting stack $STACK"
-docker stack deploy -c $STACK_YML $STACK || exit $?
+docker stack deploy --detach=false -c $STACK_YML $STACK || exit $?

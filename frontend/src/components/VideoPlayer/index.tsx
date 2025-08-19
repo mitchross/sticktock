@@ -2,13 +2,11 @@
 import clsx from 'clsx';
 import { FC, TouchEventHandler, useCallback, useEffect, useState } from 'react';
 import styles from './style.module.scss';
-import Image from 'next/image';
-import Hls from 'hls.js';
+
 import { PostOptions } from '../PostOptions';
 
 type Props = {
   mp4URL: string;
-  hlsURL?: string;
   thumbnail?: string;
   username: string;
   handle: string;
@@ -35,7 +33,6 @@ const PlayButton = () => (
 
 export const VideoPlayer: FC<Props> = ({
   mp4URL,
-  hlsURL,
   thumbnail,
   username,
   profilePic,
@@ -47,11 +44,14 @@ export const VideoPlayer: FC<Props> = ({
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
+  const [isPanoramic, setIsPanoramic] = useState(false);
+
   const onVideoClick = useCallback(() => {
     if (videoEl) {
       videoEl.paused ? videoEl.play() : videoEl.pause();
     }
   }, [videoEl]);
+
   const updateVideoProgress = useCallback(() => {
     if (videoEl) {
       setVideoProgress((videoEl.currentTime / videoEl.duration) * 100);
@@ -130,42 +130,6 @@ export const VideoPlayer: FC<Props> = ({
   const [expandDesc, setExpandDesc] = useState(false);
 
   useEffect(() => {
-    if (!videoEl) {
-      return;
-    }
-
-    if (!hlsURL) {
-      videoEl.src = mp4URL;
-      return;
-    }
-
-    if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
-      videoEl.src = hlsURL;
-    } else if (Hls.isSupported()) {
-      var hls = new Hls();
-      hls.on(Hls.Events.ERROR, function (event, data) {
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              hls.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              hls.recoverMediaError();
-              break;
-            default:
-              hls.destroy();
-              break;
-          }
-        }
-      });
-      hls.loadSource(hlsURL);
-      hls.attachMedia(videoEl);
-    } else {
-      videoEl.src = mp4URL;
-    }
-  }, [videoEl, mp4URL, hlsURL]);
-
-  useEffect(() => {
     if (!videoEl || !feedEl) return;
 
     const observer = new IntersectionObserver(
@@ -194,6 +158,19 @@ export const VideoPlayer: FC<Props> = ({
 
   const [openFc, setOpenFc] = useState<() => void>(() => () => {});
   const [closeFc, setCloseFc] = useState<() => void>(() => () => {});
+
+  useEffect(() => {
+    if (videoEl) {
+      const checkAspectRatio = () => {
+        const ratio = videoEl.videoWidth / videoEl.videoHeight;
+        setIsPanoramic(ratio > 1.5); // Consider video panoramic if width is 1.5x height
+      };
+
+      videoEl.addEventListener('loadedmetadata', checkAspectRatio);
+      return () =>
+        videoEl.removeEventListener('loadedmetadata', checkAspectRatio);
+    }
+  }, [videoEl]);
 
   return (
     <div className={clsx('relative max-h-dvh w-full', styles.Container)}>
@@ -225,8 +202,9 @@ export const VideoPlayer: FC<Props> = ({
         preload="auto"
         controls={false}
         loop
+        src={mp4URL}
         onTimeUpdate={updateVideoProgress}
-        className="relative min-h-full max-h-full cursor-pointer object-cover z-10 w-full"
+        className={clsx("relative min-h-full max-h-full cursor-pointer object-cover z-10 w-full", isPanoramic ? 'object-contain' : 'object-cover')}
         playsInline
         poster={thumbnail}
         onPlay={() => setVideoPlaying(true)}

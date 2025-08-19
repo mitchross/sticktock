@@ -5,6 +5,7 @@ import { getVideoByUrl } from './routes/by-url';
 import { getVideoById } from './routes/by-id';
 import { getRelatedVideos } from './routes/get-video';
 import { setupVarDataFolder } from './utils/setup-funcs';
+import { getRandomPostWithVideo } from './routes/random';
 
 const { dirForStatic } = setupVarDataFolder();
 
@@ -30,6 +31,8 @@ app.get('/by_url/:url', getVideoByUrl);
 app.get('/by_id/:id', getVideoById);
 
 app.get('/get_related/:url', getRelatedVideos);
+
+app.get('/random', getRandomPostWithVideo);
 
 app.get('/latest', async (_req, res, next) => {
   try {

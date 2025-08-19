@@ -16,7 +16,6 @@ import {
   restorePost,
   updateVideo,
 } from '../utils/db-helpers';
-import { convertToHLS } from '../utils/video-processing';
 
 export const downloadFileHelper = async (
   url: string,
@@ -108,9 +107,9 @@ export const downloadThroughFetch = async (url: string) => {
     let parsedURL = new URL(url);
     const controller = new AbortController();
     const decodeURI = decodeURIComponent(url);
-    console.log({
-      decodeURI,
-    });
+    // console.log({
+    //   decodeURI,
+    // });
     setTimeout(() => {
       controller.abort();
     }, 1000 * 5);
@@ -121,7 +120,7 @@ export const downloadThroughFetch = async (url: string) => {
       },
     });
     const fetchURL = fetchContent.url;
-    console.log(fetchContent.url);
+    // console.log(fetchContent.url);
     if (
       fetchContent.status === 301 ||
       fetchContent.status === 302 ||
@@ -132,7 +131,7 @@ export const downloadThroughFetch = async (url: string) => {
           ? fetchContent.headers.get('location')
           : fetchURL;
       if (redirectLocation) {
-        console.log('Redirected');
+        // console.log('Redirected');
         parsedURL = new URL(redirectLocation);
         fetchContent = await fetch(redirectLocation, {
           headers: {
@@ -222,10 +221,10 @@ export const downloadThroughFetch = async (url: string) => {
     const authorDetails = findObjectWithKey(itemInfo, 'author');
     const authorId = authorDetails?.id;
     let findAuthor = await findAuthorByTiktokId(authorId);
-    console.log({
-      itemInfo,
-      videoDetail,
-    });
+    // console.log({
+    //   itemInfo,
+    //   videoDetail,
+    // });
     if (authorDetails && !findAuthor) {
       const authorImagePath = `./public/authors/${authorId}.jpg`;
       const authorDirPath = path.join(process.cwd(), 'public', 'authors');
@@ -265,7 +264,7 @@ export const downloadThroughFetch = async (url: string) => {
 
           // Ensure the directory exists
           if (ensureDirectoryExistence(filePath)) {
-            console.log('I exist, download me');
+            // console.log('I exist, download me');
             await downloadFileHelper(url, dirPath, filePath, formattedCookies);
             return filePath.split('/public')[1];
           } else {
@@ -325,7 +324,7 @@ export const downloadThroughFetch = async (url: string) => {
         const desc = findObjectWithKey(itemInfo, 'desc') as unknown as string;
 
         if (typeof cover !== 'undefined') {
-          console.log('Downloading cover');
+          // console.log('Downloading cover');
           await downloadFileHelper(cover, coverDirPath, coverPath);
         }
 
@@ -341,24 +340,6 @@ export const downloadThroughFetch = async (url: string) => {
           mp4video: videoPath.replace('./public', ''),
           thumbnail: coverPath.replace('./public', ''),
           postId: postData.id,
-        });
-
-        const toHLS = {
-          hlsPath: path.join(process.cwd(), 'public', 'hls', declaredPostID),
-          hlsOutput: `/hls/${declaredPostID}/output.m3u8`,
-          videoPath,
-        };
-
-        convertToHLS(toHLS.videoPath, toHLS.hlsPath, async (err, output) => {
-          if (err) {
-            console.log(err);
-          } else if (output) {
-            console.log('Updating');
-            await updateVideo({
-              hlsVideo: toHLS.hlsOutput,
-              postId: postData.id,
-            });
-          }
         });
 
         const fetchData = await fetchPostByTiktokId(declaredPostID);
@@ -378,9 +359,9 @@ export const justFetchPost = async (url: string) => {
     let parsedURL = new URL(url);
     const controller = new AbortController();
     const decodeURI = decodeURIComponent(url);
-    console.log({
-      decodeURI,
-    });
+    // console.log({
+    //   decodeURI,
+    // });
     setTimeout(() => {
       controller.abort();
     }, 1000 * 10);
@@ -391,7 +372,7 @@ export const justFetchPost = async (url: string) => {
       },
     });
     const fetchURL = fetchContent.url;
-    console.log(fetchContent.url);
+    // console.log(fetchContent.url);
     if (
       fetchContent.status === 301 ||
       fetchContent.status === 302 ||
@@ -402,7 +383,7 @@ export const justFetchPost = async (url: string) => {
           ? fetchContent.headers.get('location')
           : fetchURL;
       if (redirectLocation) {
-        console.log('Redirected');
+        // console.log('Redirected');
         parsedURL = new URL(redirectLocation);
         fetchContent = await fetch(redirectLocation, {
           headers: {
@@ -489,7 +470,7 @@ export const justFetchPost = async (url: string) => {
     const videoDetail = findObjectWithKey(itemInfo, 'video');
 
     if (imageDetail) {
-      console.log('Downloading images');
+      // console.log('Downloading images');
       const music = findObjectWithKey(itemInfo, 'music')?.playUrl;
       const imageList: string[] = findObjectWithKey(imageDetail, 'images')
         ?.map((list: { imageURL: { urlList: string[] } }) =>
@@ -524,7 +505,7 @@ export const justFetchPost = async (url: string) => {
       }
     } else if (videoDetail) {
       const playAddr = videoDetail.playAddr;
-      console.log('Downloading video');
+      // console.log('Downloading video');
       if (playAddr) {
         const videoPath = `./public/videos/${declaredPostID}.mp4`;
         const videoDirPath = path.join(process.cwd(), 'public', 'videos');
@@ -534,28 +515,6 @@ export const justFetchPost = async (url: string) => {
           videoPath,
           formattedCookies
         );
-
-        const toHLS = {
-          hlsPath: path.join(process.cwd(), 'public', 'hls', declaredPostID),
-          hlsOutput: `/hls/${declaredPostID}/output.m3u8`,
-          videoPath,
-        };
-
-        convertToHLS(toHLS.videoPath, toHLS.hlsPath, async (err, output) => {
-          if (err) {
-            console.log(err);
-          } else if (output) {
-            const oldVideo = await findVideoByTiktokID(declaredPostID);
-
-            if (oldVideo && oldVideo.id) {
-              console.log('Updating');
-              await updateVideo({
-                hlsVideo: toHLS.hlsOutput,
-                postId: oldVideo.id,
-              });
-            }
-          }
-        });
 
         const coverPath = `./public/thumbnails/${declaredPostID}.jpg`;
         const coverDirPath = path.join(process.cwd(), 'public', 'thumbnails');
@@ -570,14 +529,14 @@ export const justFetchPost = async (url: string) => {
     }
     const fetchData = await fetchPostByTiktokId(declaredPostID);
     if (fetchData) {
-      console.log('Restoring post');
+      // console.log('Restoring post');
       restorePost(fetchData.id);
     }
     return fetchData;
   } catch (error) {
-    console.log({
-      error,
-    });
+    // console.log({
+    //   error,
+    // });
     return error instanceof Error ? error : new Error('Something went wrong');
   }
 };
@@ -601,7 +560,7 @@ export const getRelatedPosts = async (url: string, session?: string) => {
       },
     });
     const fetchURL = fetchContent.url;
-    console.log(fetchContent.url);
+    // console.log(fetchContent.url);
     if (
       fetchContent.status === 301 ||
       fetchContent.status === 302 ||
@@ -691,15 +650,15 @@ export const getRelatedPosts = async (url: string, session?: string) => {
     const json = await testFetch.json();
 
     const itemList = findObjectWithKey(json, 'itemList');
-    console.log({ itemList });
+    // console.log({ itemList });
     const itemInfo =
       itemList && 'map' in itemList
         ? itemList.find((item: { id: string }) => !watchedIds.includes(item.id))
         : null;
-    console.log({
-      itemInfoId: itemInfo.id,
-      watchedIds,
-    });
+    // console.log({
+    //   itemInfoId: itemInfo.id,
+    //   watchedIds,
+    // });
     if (!itemInfo) {
       return new Error('No information found');
     }
@@ -713,10 +672,10 @@ export const getRelatedPosts = async (url: string, session?: string) => {
     const authorId = authorDetails?.id;
     const authorUniqueId = authorDetails?.uniqueId;
     let findAuthor = await findAuthorByTiktokId(authorId);
-    console.log({
-      itemInfo,
-      videoDetail,
-    });
+    // console.log({
+    //   itemInfo,
+    //   videoDetail,
+    // });
     if (authorDetails && !findAuthor) {
       const authorImagePath = `./public/authors/${authorId}.jpg`;
       const authorDirPath = path.join(process.cwd(), 'public', 'authors');
@@ -758,7 +717,7 @@ export const getRelatedPosts = async (url: string, session?: string) => {
 
           // Ensure the directory exists
           if (ensureDirectoryExistence(filePath)) {
-            console.log('I exist, download me');
+            // console.log('I exist, download me');
             await downloadFileHelper(url, dirPath, filePath, formattedCookies);
             return filePath.split('/public')[1];
           } else {
@@ -818,7 +777,7 @@ export const getRelatedPosts = async (url: string, session?: string) => {
         const desc = findObjectWithKey(itemInfo, 'desc') as unknown as string;
 
         if (typeof cover !== 'undefined') {
-          console.log('Downloading cover');
+          // console.log('Downloading cover');
           await downloadFileHelper(cover, coverDirPath, coverPath);
         }
 
@@ -834,24 +793,6 @@ export const getRelatedPosts = async (url: string, session?: string) => {
           mp4video: videoPath.replace('./public', ''),
           thumbnail: coverPath.replace('./public', ''),
           postId: postData.id,
-        });
-
-        const toHLS = {
-          hlsPath: path.join(process.cwd(), 'public', 'hls', declaredPostID),
-          hlsOutput: `/hls/${declaredPostID}/output.m3u8`,
-          videoPath,
-        };
-
-        convertToHLS(toHLS.videoPath, toHLS.hlsPath, async (err, output) => {
-          if (err) {
-            console.log(err);
-          } else if (output) {
-            console.log('Updating');
-            await updateVideo({
-              hlsVideo: toHLS.hlsOutput,
-              postId: postData.id,
-            });
-          }
         });
 
         const fetchData = await fetchPostByTiktokId(declaredPostID);

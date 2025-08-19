@@ -9,14 +9,12 @@ import {
   fetchSessionByToken,
   findAuthorByTiktokId,
   restorePost,
-  updateVideo,
 } from './db-helpers';
 import xbogus from 'xbogus';
-import { z } from 'zod';
-import path, { join } from 'path';
+import path from 'path';
 import { downloadFileHelper, ensureDirectoryExistence } from './disk-utils';
-import { convertToHLS } from './video-processing';
 import { parsedVideoData } from './zod';
+import logger from './logger';
 
 export const userAgent =
   'Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.1';
@@ -55,31 +53,80 @@ export const tiktokFetchOptions = ({
 });
 
 export const parseTikTokData = async (res: Response) => {
-  let cookies: string[] = [];
-  for (let [key, value] of res.headers.entries()) {
-    if (key.toLowerCase() === 'set-cookie') {
-      cookies.push(value);
+  try {
+    if (!res.ok) {
+      throw new Error(`HTTP Response not OK: ${res.status}`);
     }
+
+    let cookies: string[] = [];
+    for (let [key, value] of res.headers.entries()) {
+      if (key.toLowerCase() === 'set-cookie') {
+        cookies.push(value);
+      }
+    }
+
+    const textContent = await res.text();
+    if (!textContent) {
+      throw new Error('Empty response content');
+    }
+
+    logger.info('Response content length:', textContent.length);
+
+    const dom = new jsdom.JSDOM(textContent);
+    const rehydrationElement = dom.window.document.querySelector(
+      '#__UNIVERSAL_DATA_FOR_REHYDRATION__'
+    );
+
+    if (!rehydrationElement) {
+      logger.info('Rehydration element not found in DOM');
+      // Try fallback data extraction
+      const scriptElements = dom.window.document.querySelectorAll('script');
+      for (const script of scriptElements) {
+        const content = script.textContent || '';
+        if (content.includes('SIGI_STATE')) {
+          const match = content.match(/SIGI_STATE["]?\s*=\s*({.+?});/);
+          if (match && match[1]) {
+            const jsonParseData = JSON.parse(match[1]);
+            return extractDataFromJson(jsonParseData, cookies);
+          }
+        }
+      }
+      throw new Error('Could not find TikTok data in page');
+    }
+
+    const rehydrationData = rehydrationElement.textContent;
+    if (!rehydrationData) {
+      throw new Error('Rehydration data is empty');
+    }
+
+    let jsonParseData;
+    try {
+      jsonParseData = JSON.parse(rehydrationData);
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      throw new Error('Failed to parse rehydration data');
+    }
+
+    return extractDataFromJson(jsonParseData, cookies);
+  } catch (error) {
+    console.error('Parse TikTok Data Error:', error);
+    throw error;
   }
+};
 
-  const textContent = await res.text();
+// Helper function to extract data from JSON
+const extractDataFromJson = (jsonData: any, cookies: string[]) => {
+  const deviceId = findObjectWithKey(jsonData, 'wid');
+  const odinId = findObjectWithKey(jsonData, 'odinId');
+  const webIdLastTime = findObjectWithKey(jsonData, 'webIdCreatedTime');
+  const abTest = findObjectWithKey(jsonData, 'abTestVersion');
+  const abTestVersions: string[] = abTest ? abTest.versionName?.split(',') : [];
+  const msToken = findObjectWithKey(jsonData, 'msToken');
 
-  const dom = new jsdom.JSDOM(textContent);
-  const rehydrationData = dom.window.document.querySelector(
-    '#__UNIVERSAL_DATA_FOR_REHYDRATION__'
-  )?.textContent;
-  const jsonParseData = rehydrationData ? JSON.parse(rehydrationData) : null;
-
-  if (!jsonParseData) {
-    return new Error('No Data Found');
+  if (!deviceId || !odinId) {
+    console.error('Missing required fields:', { deviceId, odinId });
+    throw new Error('Missing required TikTok data fields');
   }
-
-  const deviceId = findObjectWithKey(jsonParseData, 'wid');
-  const odinId = findObjectWithKey(jsonParseData, 'odinId');
-  const webIdLastTime = findObjectWithKey(jsonParseData, 'webIdCreatedTime');
-  const abTest = findObjectWithKey(jsonParseData, 'abTestVersion');
-  const abTestVersions: string[] = abTest ? abTest.versionName.split(',') : [];
-  const msToken = res.headers.get('x-ms-token');
 
   return {
     deviceId,
@@ -93,14 +140,34 @@ export const parseTikTokData = async (res: Response) => {
 };
 
 const BASE_DOMAINS_WHITELIST = [
-  'tiktok.com', 'tiktokcdn.com', 'tiktokcdn-eu.com'
+  'tiktok.com', 'tiktokcdn.com', 'tiktokcdn-eu.com', 'tiktokcdn-us.com'
 ];
 
-function throwIfBaseDomainIsNotInWhitelist(url: URL): void {
-  for (let i=0; i<BASE_DOMAINS_WHITELIST.length; i+=1) {
-    if (url.host.endsWith(BASE_DOMAINS_WHITELIST[i])) {
-      return;
+function isInWhitelist(url: URL): boolean {
+  for (const allowedBase of BASE_DOMAINS_WHITELIST) {
+    if (url.host.endsWith(allowedBase)) {
+      return true;
     }
+  }
+  return false;
+}
+
+const BASE_DOMAINS_BLACKLIST = [
+  'prime.tiktok.com'
+];
+
+function isInBlacklist(url: URL): boolean {
+  for (const badBase of BASE_DOMAINS_BLACKLIST) {
+    if (url.host.endsWith(badBase)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function throwIfBaseDomainIsNotInWhitelist(url: URL): void {
+  if (isInWhitelist(url) && !isInBlacklist(url)) {
+    return;
   }
   const errMsg = `Refuse to fetch ${url.href}`;
   console.log(errMsg);
@@ -114,7 +181,7 @@ export const fetchAndFollowURL = async (url: string) => {
   throwIfBaseDomainIsNotInWhitelist(parsedURL);
   setTimeout(() => {
     controller.abort();
-  }, 1000 * 5);
+  }, 1000 * 50);
   let fetchContent = await fetch(decodeURI, {
     signal: controller.signal,
     headers: {
@@ -122,7 +189,7 @@ export const fetchAndFollowURL = async (url: string) => {
     },
   });
   const fetchURL = fetchContent.url;
-  console.log(fetchContent.url);
+  logger.info(fetchContent.url);
   if (
     fetchContent.status === 301 ||
     fetchContent.status === 302 ||
@@ -133,7 +200,7 @@ export const fetchAndFollowURL = async (url: string) => {
         ? fetchContent.headers.get('location')
         : fetchURL;
     if (redirectLocation) {
-      console.log('Redirected');
+      logger.info(`Redirected from ${url} to ${redirectLocation}`);
       parsedURL = new URL(redirectLocation);
       fetchContent = await fetch(redirectLocation, {
         headers: {
@@ -219,7 +286,7 @@ export const pullVideoData = async (
   if (parsedData.success) {
     return parsedData.data;
   } else {
-    console.log(dataObject);
+    logger.info(dataObject);
     return new Error('Data hold unexpected format');
   }
 };
@@ -230,22 +297,29 @@ export const fetchPostByUrlAndMode = async (
   sessionToken?: string
 ) => {
   try {
+    // Validate URL first
+    if (!url) {
+      throw new Error('Invalid URL provided');
+    }
+
     const { response, url: finalURL } = await fetchAndFollowURL(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
     const postId = finalURL.pathname.split('/').at(-1);
     if (!postId) {
-      return new Error('Video ID not found');
+      throw new Error('Video ID not found in URL');
     }
-    const findPost = await fetchPostByTiktokId(postId);
 
+    const findPost = await fetchPostByTiktokId(postId);
     if (findPost) {
       return findPost;
     }
 
     const parseData = await parseTikTokData(response);
-
     if (!parseData || parseData instanceof Error) {
-      return new Error('Something went wrong');
+      throw new Error('Failed to parse TikTok data');
     }
 
     const {
@@ -283,7 +357,15 @@ export const fetchPostByUrlAndMode = async (
       }
     );
 
+    if (!fetchContent.ok) {
+      throw new Error(`API request failed with status: ${fetchContent.status}`);
+    }
+
     const jsonContent = await fetchContent.json();
+    if (!jsonContent) {
+      throw new Error('Failed to parse API response');
+    }
+
     let watchedIds;
     if (sessionToken) {
       const userSession = await fetchSessionByToken(sessionToken);
@@ -293,9 +375,8 @@ export const fetchPostByUrlAndMode = async (
     }
 
     const videoData = await pullVideoData(jsonContent, mode, watchedIds);
-
     if (videoData instanceof Error) {
-      return videoData;
+      throw videoData;
     }
 
     const { author, description, id: postID, image, music, video } = videoData;
@@ -380,24 +461,6 @@ export const fetchPostByUrlAndMode = async (
         originalURL: finalURL.toString(),
       });
 
-      const toHLS = {
-        hlsPath: path.join(process.cwd(), 'public', 'hls', post.id.toString()),
-        hlsOutput: `/hls/${post.id}/output.m3u8`,
-        videoPath: videoFilePath,
-      };
-
-      convertToHLS(toHLS.videoPath, toHLS.hlsPath, async (err, output) => {
-        if (err) {
-          console.log(err);
-        } else if (output) {
-          console.log('Updating');
-          await updateVideo({
-            hlsVideo: toHLS.hlsOutput,
-            postId: post.id,
-          });
-        }
-      });
-
       await createVideo({
         mp4video: `/videos/${postID}.mp4`,
         thumbnail: `/thumbnails/${postID}.jpg`,
@@ -406,7 +469,10 @@ export const fetchPostByUrlAndMode = async (
     }
     return await fetchPostByTiktokId(postID);
   } catch (error) {
-    return error instanceof Error ? error : new Error('Something went wrong');
+    console.error('TikTok API Error:', error);
+    return error instanceof Error
+      ? error
+      : new Error('Failed to fetch TikTok content');
   }
 };
 
@@ -501,19 +567,10 @@ export const downloadPostByUrl = async (url: string, originalID: number) => {
       if (video.cover) {
         downloadFileHelper(video.cover, videoDirPath, thumbnailFilePath);
       }
-
-      const toHLS = {
-        hlsPath: path.join(process.cwd(), 'public', 'hls', postID),
-        hlsOutput: `/hls/${postID}/output.m3u8`,
-        videoPath: videoFilePath,
-      };
-
-      convertToHLS(toHLS.videoPath, toHLS.hlsPath, async (err, output) => {});
     }
     await restorePost(originalID);
     return await fetchPostByTiktokId(postID);
   } catch (error) {
-    console.error(error)
     return error instanceof Error ? error : new Error('Something went wrong');
   }
 };

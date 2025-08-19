@@ -41,6 +41,10 @@ export const Feed: FC<Props> = ({ rootPost, token }) => {
     }
   }, [token]);
 
+
+  //  --------------------------------------------------------------
+  // XXX getting random post from known ones
+  
   const getNextPost = useCallback(
     async (url: string) => {
       try {
@@ -49,9 +53,7 @@ export const Feed: FC<Props> = ({ rootPost, token }) => {
         }
 
         const fetchData = await fetch(
-          `${API_URL_FOR_BROWSER}/get_related/${encodeURIComponent(
-            url
-          )}`,
+          `${API_URL_FOR_BROWSER}/random`,
           {
             headers: {
               sessiontoken: sessionToken,
@@ -98,6 +100,9 @@ export const Feed: FC<Props> = ({ rootPost, token }) => {
   const scrollingTimer = useRef<NodeJS.Timeout | null>(null);
 
   const onScroll = useCallback(async () => {
+
+    // XXX we can add here just getting existing posts, that should have ok data, and do random show (.../random in api?)
+
     if (startedScrolling.current) {
       if (scrollingTimer.current) {
         clearTimeout(scrollingTimer.current);
@@ -151,11 +156,6 @@ export const Feed: FC<Props> = ({ rootPost, token }) => {
           {post.video ? (
             <VideoPlayer
               mp4URL={`${API_URL_FOR_BROWSER}${post.video?.mp4URL}`}
-              hlsURL={
-                post.video?.hlsURL
-                  ? `${API_URL_FOR_BROWSER}${post.video?.hlsURL}`
-                  : undefined
-              }
               thumbnail={
                 post.video?.thumbnail
                   ? `${API_URL_FOR_BROWSER}${post.video?.thumbnail}`

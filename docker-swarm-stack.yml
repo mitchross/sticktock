@@ -6,10 +6,17 @@ services:
     image: sticktock-webapp
     ports:
       - '3000:3000'
+    networks:
+      - api
   
   backend-api:
     image: sticktock-api
     ports:
       - '2000:2000'
+    networks:
+      - api
     volumes:
       - /var/local/sticktock-api-data:/var/local/sticktock/
+
+networks:
+  api:

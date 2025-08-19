@@ -2,8 +2,8 @@
 import { parse, serialize } from 'cookie';
 import crypto from 'crypto';
 import { postSchema } from '../../../../../utils/types/posts';
-import { NextRequest } from 'next/server';
 import { API_URL_FOR_SERVER, FRONTEND_URL_FOR_BROWSER } from '../../../../../service.config';
+import { NextRequest } from 'next/server';
 
 function generateSessionToken(length = 32) {
   return crypto.randomBytes(length).toString('hex');

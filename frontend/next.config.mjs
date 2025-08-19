@@ -7,7 +7,7 @@ const nextConfig = {
         hostname: 'localhost',
       },
       {
-        hostname: 'smolvideo.com',
+        hostname: 'api.sticktock.staging.3nsoft.net',
       },
     ],
   },

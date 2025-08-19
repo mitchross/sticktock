@@ -106,18 +106,16 @@ export async function createCarousel(carouselData: {
   });
 }
 
-//Function to creatae a video
+//Function to create a video
 export async function createVideo(videoData: {
   mp4video: string;
-  hlsVideo?: string;
   thumbnail?: string;
   postId: number;
 }) {
-  const { mp4video, postId, hlsVideo, thumbnail } = videoData;
+  const { mp4video, postId, thumbnail } = videoData;
   return await prisma.video.create({
     data: {
       mp4URL: mp4video,
-      hlsURL: hlsVideo,
       thumbnail,
       post: {
         connect: {
@@ -126,6 +124,17 @@ export async function createVideo(videoData: {
       },
     },
   });
+}
+
+export async function getRandomPost() {
+  const { _max } = await prisma.video.aggregate({
+    _max: {
+      id: true
+    },
+  });
+  if (!_max.id) { return; }
+  const randomVideoId = Math.floor(Math.random() * _max.id);
+  return await fetchPostById(randomVideoId);
 }
 
 //Function to find video by mp4URL
@@ -172,18 +181,16 @@ export async function findVideoByTiktokID(tiktokId: string) {
 //Function to update a video
 export async function updateVideo(videoData: {
   mp4video?: string;
-  hlsVideo?: string;
   thumbnail?: string;
   postId: number;
 }) {
-  const { mp4video, postId, hlsVideo, thumbnail } = videoData;
+  const { mp4video, postId, thumbnail } = videoData;
   return await prisma.video.update({
     where: {
       postId,
     },
     data: {
       mp4URL: mp4video,
-      hlsURL: hlsVideo,
       thumbnail,
     },
   });

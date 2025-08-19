@@ -3,7 +3,7 @@ import { FormEventHandler, useCallback, useState } from 'react';
 import styles from './style.module.scss';
 import { LoadingSpinner } from '../Loading';
 import { checkURL } from '../../../utils/strings/check-url';
-import { API_URL_FOR_SERVER, API_URL_FOR_BROWSER, BASE_DOMAIN } from '../../../service.config';
+import { API_URL_FOR_BROWSER, BASE_DOMAIN } from '../../../service.config';
 
 const ONION_HOST = 'b7vypdv52igjfg7vwhlofny45koaa4ltletx67ranlwfotiiqwza2eyd.onion';
 
@@ -24,7 +24,7 @@ export const HomePage = () => {
         setLoading(true);
         setError('');
         const videoData = await fetch(
-          `${API_URL_FOR_SERVER}/by_url/${encodeURIComponent(
+          `${API_URL_FOR_BROWSER}/by_url/${encodeURIComponent(
             videoURL
           )}`
         ).then((res) => res.json());

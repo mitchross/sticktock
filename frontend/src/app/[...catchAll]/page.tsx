@@ -11,12 +11,19 @@ const proccess = async (catchAll: string[]) => {
       )}`
     );
 
+    // DEBUG
+    console.log(`call to ${getData.status} returns ${getData.status}`);
+
     const res = await getData.json();
     console.log(res);
     return {
       redirectTarget: res.id ? `/post/${res.id}` : '/404',
     };
   } catch (err) {
+
+    // DEBUG
+    console.log(`error in fetching url from tiktok`, err);
+
     return {
       redirectTarget: '/404',
     };
