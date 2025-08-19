@@ -58,7 +58,7 @@ The generic form of the stack file uses `latest` images, but run labels images w
 To stop stack, do the usual `docker stack rm sticktock`.
 
 ## License
-© 2025-present PrivacySafe Services LLC. This project is dedicated to ethical <a href="https://fsf.org" target="_blank" rel="noreferrer noopener">Free and Open Source Software</a> and <a href="https://oshwa.org" target="_blank" rel="noreferrer noopener">Open Source Hardware</a>. PrivacySafe® is a registered trademark.
+© 2025-present Ivy Cyber Education LLC. This project is dedicated to ethical <a href="https://fsf.org" target="_blank" rel="noreferrer noopener">Free and Open Source Software</a> and <a href="https://oshwa.org" target="_blank" rel="noreferrer noopener">Open Source Hardware</a>. PrivacySafe® is a registered trademark.
 
 Released under the [GNU AGPLv3 License](LICENSE). See [LICENSE](LICENSE) for more information. StickTock is modified from [offtiktok](https://github.com/MarsHeer/offtiktok) and [offtiktokapi](https://github.com/MarsHeer/offtiktokapi) released under the MIT/Expat License by MarsHeer.
 
