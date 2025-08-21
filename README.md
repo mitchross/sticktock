@@ -6,9 +6,7 @@
 
 StickTock is 100% free and open source software (FOSS) developed by privacy advocates. StickTock allows users to view, share, and download TikTok videos without exposing themselves to invasive tracking. Anyone with a web browser can now watch TikToks while protecting their privacy: [StickTock.com](https://sticktock.com)
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R1194HN7)
-
-[![liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/PrivacySafe/donate)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R1194HN7) [![liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/PrivacySafe/donate)
 
 ## Alpha Release Announcement
 
