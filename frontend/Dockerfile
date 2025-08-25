@@ -1,6 +1,8 @@
 # Use an official Node.js LTS base image
 FROM node:lts
 
+ENV NEXT_TELEMETRY_DISABLED=1
+
 # Set the working directory
 WORKDIR /app
 
