@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sticktock-backend
+  namespace: sticktock
+  labels:
+    app.kubernetes.io/name: sticktock-backend
+    app.kubernetes.io/component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sticktock-backend
+  template:
+    metadata:
+      labels:
+        app: sticktock-backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: backend
+        image: ghcr.io/mitchross/sticktock/backend:latest@sha256:9d2d315c221ae10b6807da5dc3d170078585822508cda4323d34b8f89822bd8f
+
+        ports:
+        - containerPort: 2000
+        envFrom:
+        - configMapRef:
+            name: sticktock-config
+        env:
+        - name: DATABASE_URL
+          value: "file:/var/local/sticktock/prisma-db.sqlite"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: sticktock-data
+          mountPath: /var/local/sticktock
+        - name: tmp
+          mountPath: /tmp
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: sticktock-data
+        persistentVolumeClaim:
+          claimName: sticktock-data-pvc
+      - name: tmp
+        emptyDir: {}

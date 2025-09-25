@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sticktock-frontend
+  namespace: sticktock
+  labels:
+    app.kubernetes.io/name: sticktock-frontend
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sticktock-frontend
+  template:
+    metadata:
+      labels:
+        app: sticktock-frontend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: frontend
+        image: ghcr.io/mitchross/sticktock/frontend:latest@sha256:55892c53108828cd8935d001dc0f1681f053419c5acd099496279935b55ef80e
+
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: sticktock-config
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: nextjs-cache
+          mountPath: /app/.next/cache
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: nextjs-cache
+        emptyDir: {}
