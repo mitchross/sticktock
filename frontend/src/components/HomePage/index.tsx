@@ -1,5 +1,5 @@
 'use client';
-import { FormEventHandler, useCallback, useState } from 'react';
+import { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import styles from './style.module.scss';
 import { LoadingSpinner } from '../Loading';
 import { checkURL } from '../../../utils/strings/check-url';
@@ -50,6 +50,16 @@ export const HomePage = () => {
     [videoURL]
   );
 
+  const [displayDomain, setDisplayDomain] = useState(
+    BASE_DOMAIN || 'your-domain.example'
+  );
+
+  useEffect(() => {
+    if (!BASE_DOMAIN && typeof window !== 'undefined') {
+      setDisplayDomain(window.location.host);
+    }
+  }, []);
+
   return (
     <div className="w-full px-5 container md:max-w-lg mx-auto flex flex-col items-center">
       <img src="/sticktock-wordmark.svg" />
@@ -95,7 +105,9 @@ export const HomePage = () => {
       <p className="articulat text-sm my-5 text-blue text-center margin-bottom-48">
         {loading
           ? 'Processing video, this could take a minute...'
-          : [ `Or replace "tiktok.com" with "${BASE_DOMAIN}" in your video URL.` ]}
+          : [
+              `Or replace "tiktok.com" with "${displayDomain}" in your video URL.`,
+            ]}
         &nbsp;&nbsp;
         <a
           href="https://bitsontape.com/p/sticktock-share-tiktok-videos"
