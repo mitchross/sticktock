@@ -16,6 +16,13 @@ RUN npm ci
 # Build the project
 RUN npm run build
 
+# Ensure runtime directories are owned by the non-root user
+RUN mkdir -p /var/local/sticktock \
+	&& chown -R node:node /usr/src/app /var/local/sticktock
+
+# Drop root privileges
+USER node
+
 VOLUME /var/local/sticktock
 
 # Expose the port the app runs on
