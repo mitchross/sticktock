@@ -3,10 +3,8 @@ FROM node:lts
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create a non-root user with UID 1000 for Talos OS compatibility
-# Use existing GID 1000 if it exists, otherwise create nextjs group
-RUN useradd --uid 1000 --gid 1000 --system --shell /bin/bash --create-home nextjs 2>/dev/null || \
-    (groupadd --system nextjs && useradd --uid 1000 --gid nextjs --system --shell /bin/bash --create-home nextjs)
+# Use existing node user (UID 1000) for Talos OS compatibility
+# The node:lts image already has a node user with UID/GID 1000
 
 # Set the working directory
 WORKDIR /app
@@ -15,7 +13,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies as root, then fix permissions
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # Copy the rest of the application code
 COPY . .
@@ -25,11 +23,11 @@ RUN npm run build
 
 # Create cache directories and set proper ownership for Talos OS
 RUN mkdir -p .next/cache/fetch-cache .next/cache/images && \
-    chown -R nextjs:nextjs /app && \
+    chown -R node:node /app && \
     chmod -R 755 /app
 
 # Switch to non-root user before runtime
-USER 1000:1000
+USER node
 
 # Expose the port the app runs on
 EXPOSE 3000
