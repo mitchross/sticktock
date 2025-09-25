@@ -3,9 +3,10 @@ FROM node:lts
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create a non-root user with specific UID/GID for Talos OS compatibility
-RUN groupadd --gid 1000 --system nextjs \
-  && useradd --uid 1000 --gid nextjs --system --shell /bin/bash --create-home nextjs
+# Create a non-root user with UID 1000 for Talos OS compatibility
+# Use existing GID 1000 if it exists, otherwise create nextjs group
+RUN useradd --uid 1000 --gid 1000 --system --shell /bin/bash --create-home nextjs 2>/dev/null || \
+    (groupadd --system nextjs && useradd --uid 1000 --gid nextjs --system --shell /bin/bash --create-home nextjs)
 
 # Set the working directory
 WORKDIR /app
