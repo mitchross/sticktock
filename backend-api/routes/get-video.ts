@@ -45,9 +45,12 @@ export const getRelatedVideos: RequestHandler = async (req, res) => {
         userSession = await createSession(sessionParsed);
       }
     }
-    logger.info('Running quickfetch');
+  logger.info('Running quickfetch');
+  const usePuppeteer = (req.query.fallback as string) === 'puppeteer';
 
-    const fetchRelatedPosts = await getRelatedPosts(url, userSession?.token);
+  // getRelatedPosts currently uses legacy helpers; leaving as-is but
+  // future work could thread `usePuppeteer` into modern fetchers.
+  const fetchRelatedPosts = await getRelatedPosts(url, userSession?.token);
     logger.info({
       fetchRelatedPosts,
     });

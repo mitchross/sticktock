@@ -12,6 +12,7 @@ export const HomePage = () => {
   const [videoURL, setVideoURL] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [usePuppeteer, setUsePuppeteer] = useState(false);
   const getVideo: FormEventHandler<HTMLFormElement> = useCallback(
     async (e) => {
       try {
@@ -29,10 +30,9 @@ export const HomePage = () => {
         }
         setLoading(true);
         setError('');
+        const fallbackQuery = usePuppeteer ? '?fallback=puppeteer' : '';
         const videoData = await fetch(
-          `${API_URL_FOR_BROWSER}/by_url/${encodeURIComponent(
-            videoURL
-          )}`
+          `${API_URL_FOR_BROWSER}/by_url/${encodeURIComponent(videoURL)}${fallbackQuery}`
         ).then((res) => res.json());
         setLoading(false);
 
@@ -107,6 +107,19 @@ export const HomePage = () => {
           )}
         </button>
       </form>
+
+      <div className="w-full flex items-center mt-3 mb-6">
+        <input
+          id="use-puppeteer"
+          type="checkbox"
+          checked={usePuppeteer}
+          onChange={(e) => setUsePuppeteer(e.target.checked)}
+          className="mr-2"
+        />
+        <label htmlFor="use-puppeteer" className="text-sm text-blue">
+          Use Puppeteer fallback for hard-to-parse pages (opt-in)
+        </label>
+      </div>
 
       <p className="articulat text-sm my-5 text-blue text-center margin-bottom-48">
         {loading

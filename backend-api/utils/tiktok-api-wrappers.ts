@@ -307,7 +307,8 @@ export const pullVideoData = async (
 export const fetchPostByUrlAndMode = async (
   url: string,
   mode: (typeof URL_SANS_BOGUS)[keyof typeof URL_SANS_BOGUS],
-  sessionToken?: string
+  sessionToken?: string,
+  options?: { usePuppeteer?: boolean }
 ) => {
   try {
     // Validate URL first
@@ -315,7 +316,44 @@ export const fetchPostByUrlAndMode = async (
       throw new Error('Invalid URL provided');
     }
 
-    const { response, url: finalURL } = await fetchAndFollowURL(url);
+    let response: Response | null = null;
+    let finalURL: URL | null = null;
+
+    if (options?.usePuppeteer) {
+      try {
+        const { fetchPageWithPuppeteer } = await import('./puppeteer-fallback');
+        const { html, finalUrl } = await fetchPageWithPuppeteer(url);
+        finalURL = new URL(finalUrl);
+        // build a minimal Response-like object for parseTikTokData
+        response = {
+          ok: true,
+          status: 200,
+          url: finalUrl,
+          headers: {
+            entries() {
+              return [] as any;
+            },
+            get() {
+              return null;
+            },
+          } as unknown as Headers,
+          text: async () => html,
+          clone() {
+            return this;
+          },
+        } as unknown as Response;
+      } catch (err) {
+        console.error('Puppeteer fallback failed:', err);
+        // continue to normal fetch below
+      }
+    }
+
+    if (!response || !finalURL) {
+      const { response: fetchedResponse, url: fetchedUrl } = await fetchAndFollowURL(url);
+      response = fetchedResponse;
+      finalURL = fetchedUrl;
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
