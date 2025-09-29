@@ -12,6 +12,7 @@ import {
   getRelatedPosts,
   justFetchPost,
 } from '../legacy/old-fetching-helpers';
+import { isLikelyAssetUrl } from '../utils/url-helpers';
 import { checkAndCleanPublicFolder } from '../utils/disk-utils';
 import logger from '../utils/logger';
 
@@ -26,6 +27,10 @@ openDb();
 export const getRelatedVideos: RequestHandler = async (req, res) => {
   try {
     const { url } = req.params;
+    if (isLikelyAssetUrl(url)) {
+      res.status(400).send({ error: 'Provided URL looks like an asset, not a TikTok post' });
+      return;
+    }
     const { sessiontoken } = req.headers;
     let sessionParsed =
       typeof sessiontoken === 'string'

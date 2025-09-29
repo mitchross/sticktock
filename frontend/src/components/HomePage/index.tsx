@@ -3,6 +3,7 @@ import { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import styles from './style.module.scss';
 import { LoadingSpinner } from '../Loading';
 import { checkURL } from '../../../utils/strings/check-url';
+import { isLikelyAssetUrl } from '../../../utils/check-url';
 import { API_URL_FOR_BROWSER, BASE_DOMAIN } from '../../../service.config';
 
 const ONION_HOST = 'b7vypdv52igjfg7vwhlofny45koaa4ltletx67ranlwfotiiqwza2eyd.onion';
@@ -19,6 +20,11 @@ export const HomePage = () => {
 
         if (!isValidURL) {
           setError('Please enter a valid TikTok video URL');
+          return;
+        }
+
+        if (isLikelyAssetUrl(videoURL)) {
+          setError('That looks like an image or media URL; paste the TikTok post URL instead.');
           return;
         }
         setLoading(true);

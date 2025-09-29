@@ -22,6 +22,21 @@ export async function generateMetadata(
       subdomain ? `${subdomain}.` : ''
     }tiktok.com/${decodeURIComponent(path.join('/'))}`;
 
+    // server-side guard for obvious asset paths
+    try {
+      const u = new URL(constructedURL);
+      if (/\.(jpg|jpeg|png|gif|mp4|webm|svg|ico)(\?|$)/i.test(u.pathname) || /\/authors\//.test(u.pathname)) {
+        return {
+          title:
+            "OffTikTok | Share TikToks with anyone, even if they don't have the app.",
+          description:
+            "OffTikTok lets you share Tiktoks with anyone, even if they don't have the app. Just paste the link and share it with your friends. Watch Tiktoks without ads, apps or geo-restrictions",
+        };
+      }
+    } catch (e) {
+      // ignore
+    }
+
     setTimeout(() => {
       controller.abort();
     }, 1000 * 5);

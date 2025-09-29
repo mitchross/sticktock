@@ -320,6 +320,18 @@ export const fetchPostByUrlAndMode = async (
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
+    // If the final URL is not a TikTok post page (e.g. an asset or 404 redirect), bail early.
+    const pathname = finalURL.pathname || '';
+    const looksLikePost = /\/video\//.test(pathname) || /item\/detail/.test(finalURL.href) || /\/v\//.test(pathname);
+    if (!looksLikePost) {
+      console.error('fetchPostByUrlAndMode: resolved URL is not a TikTok post page', {
+        originalUrl: url,
+        finalUrl: finalURL.toString(),
+        status: response.status,
+      });
+      return new Error('Resolved URL is not a TikTok post page');
+    }
+
     const postId = finalURL.pathname.split('/').at(-1);
     if (!postId) {
       throw new Error('Video ID not found in URL');
