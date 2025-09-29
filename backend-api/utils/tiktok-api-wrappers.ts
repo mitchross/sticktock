@@ -58,6 +58,9 @@ export const parseTikTokData = async (res: Response) => {
       throw new Error(`HTTP Response not OK: ${res.status}`);
     }
 
+    // Clone the response so parsing/logging does not consume the original body
+    const resClone = res.clone();
+
     let cookies: string[] = [];
     for (let [key, value] of res.headers.entries()) {
       if (key.toLowerCase() === 'set-cookie') {
@@ -65,7 +68,7 @@ export const parseTikTokData = async (res: Response) => {
       }
     }
 
-    const textContent = await res.text();
+    const textContent = await resClone.text();
     if (!textContent) {
       throw new Error('Empty response content');
     }
@@ -109,7 +112,17 @@ export const parseTikTokData = async (res: Response) => {
 
     return extractDataFromJson(jsonParseData, cookies);
   } catch (error) {
-    console.error('Parse TikTok Data Error:', error);
+    try {
+      // Attempt to log helpful debug info: status, url and a small snippet of the page
+      const snippet = typeof (await (res.clone()).text()) === 'string'
+        ? (await res.clone().text()).slice(0, 2000)
+        : '';
+      console.error('Parse TikTok Data Error:', error);
+      console.error('Response status:', (res as any).status, 'url:', (res as any).url);
+      console.error('Response snippet:', snippet);
+    } catch (logErr) {
+      console.error('Parse TikTok Data Error (failed to capture snippet):', logErr);
+    }
     throw error;
   }
 };
