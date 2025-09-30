@@ -187,6 +187,32 @@ function throwIfBaseDomainIsNotInWhitelist(url: URL): void {
   throw new Error(errMsg);
 }
 
+// Normalize original URL by removing common transient/tracking query params
+const normalizeOriginalUrl = (urlString: string) => {
+  try {
+    const u = new URL(urlString);
+    const toRemove = [
+      'is_from_webapp',
+      'sender_device',
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'utm_term',
+      'utm_content',
+      'fbclid'
+    ];
+    for (const k of toRemove) {
+      u.searchParams.delete(k);
+    }
+    // optional: sort params for canonical form
+    const params = [...u.searchParams.entries()].sort();
+    u.search = params.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+    return u.toString();
+  } catch (e) {
+    return urlString;
+  }
+};
+
 export const fetchAndFollowURL = async (url: string) => {
   const controller = new AbortController();
   const decodeURI = decodeURIComponent(url);
@@ -490,7 +516,8 @@ export const fetchPostByUrlAndMode = async (
         type: 'photo',
         tiktokId: postID,
         postDesc: description,
-        originalURL: finalURL.toString(),
+        originalURL: normalizeOriginalUrl(finalURL.toString()),
+        usedPuppeteer: !!options?.usePuppeteer,
       });
 
       await createCarousel({
@@ -521,7 +548,8 @@ export const fetchPostByUrlAndMode = async (
         type: 'video',
         tiktokId: postID,
         postDesc: description,
-        originalURL: finalURL.toString(),
+        originalURL: normalizeOriginalUrl(finalURL.toString()),
+        usedPuppeteer: !!options?.usePuppeteer,
       });
 
       await createVideo({
