@@ -13,9 +13,10 @@ COPY . .
 # Install project dependencies
 RUN npm ci
 
-# Install Playwright browsers and required dependencies so Playwright can run in the container.
-# This will download browser binaries and run the dependency installer.
-RUN npx playwright install --with-deps || true
+# Install Playwright browsers and system dependencies
+# Must run as root BEFORE switching to node user
+# Install chromium browser for playwright-extra and system deps in one command
+RUN npx playwright install --with-deps chromium
 
 # Build the project
 RUN npm run build
