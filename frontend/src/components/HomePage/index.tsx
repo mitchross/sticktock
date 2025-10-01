@@ -12,7 +12,7 @@ export const HomePage = () => {
   const [videoURL, setVideoURL] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [usePuppeteer, setUsePuppeteer] = useState(false);
+  const [usePlaywright, setUsePlaywright] = useState(false);
   const getVideo: FormEventHandler<HTMLFormElement> = useCallback(
     async (e) => {
       try {
@@ -30,7 +30,7 @@ export const HomePage = () => {
         }
         setLoading(true);
         setError('');
-        const fallbackQuery = usePuppeteer ? '?fallback=puppeteer' : '';
+        const fallbackQuery = usePlaywright ? '?fallback=playwright' : '';
         const videoData = await fetch(
           `${API_URL_FOR_BROWSER}/by_url/${encodeURIComponent(videoURL)}${fallbackQuery}`
         ).then((res) => res.json());
@@ -53,7 +53,7 @@ export const HomePage = () => {
         }
       }
     },
-    [videoURL]
+    [videoURL, usePlaywright]
   );
 
   const [displayDomain, setDisplayDomain] = useState(
@@ -110,14 +110,14 @@ export const HomePage = () => {
 
       <div className="w-full flex items-center mt-3 mb-6">
         <input
-          id="use-puppeteer"
+          id="use-playwright"
           type="checkbox"
-          checked={usePuppeteer}
-          onChange={(e) => setUsePuppeteer(e.target.checked)}
+          checked={usePlaywright}
+          onChange={(e) => setUsePlaywright(e.target.checked)}
           className="mr-2"
         />
-        <label htmlFor="use-puppeteer" className="text-sm text-blue">
-          Use Puppeteer fallback for hard-to-parse pages (opt-in)
+        <label htmlFor="use-playwright" className="text-sm text-blue">
+          Use browser rendering (Playwright) for better compatibility
         </label>
       </div>
 

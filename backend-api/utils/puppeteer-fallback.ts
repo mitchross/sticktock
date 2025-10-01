@@ -1,21 +1,73 @@
-import { getBrowser } from '../legacy/puppeteer';
+import { chromium } from 'playwright-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { Browser } from 'playwright';
 
-export const fetchPageWithPuppeteer = async (url: string): Promise<{ html: string; finalUrl: string }> => {
+// Add the stealth plugin to playwright-extra
+chromium.use(StealthPlugin());
+
+let _browser: Browser | null = null;
+
+async function getBrowser(): Promise<Browser> {
+  if (_browser) return _browser;
+
+  // Launch a single shared browser instance with stealth plugin enabled
+  _browser = await chromium.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-blink-features=AutomationControlled',
+    ],
+  });
+
+  return _browser;
+}
+
+export const fetchPageWithPuppeteer = async (url: string, opts?: { timeoutMs?: number }): Promise<{ html: string; finalUrl: string }> => {
   const browser = await getBrowser();
-  const page = await browser.newPage();
+  const context = await browser.newContext({
+    viewport: { width: 1920, height: 1080 },
+    userAgent:
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    locale: 'en-US',
+    timezoneId: 'America/New_York',
+  });
+
+  const page = await context.newPage();
+
   try {
-    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.1');
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+    const timeout = opts?.timeoutMs ?? 30000;
+    await page.goto(url, { waitUntil: 'networkidle', timeout });
+
+    // wait a short moment for any late-rendered content
+    await page.waitForTimeout(500);
+
     const finalUrl = page.url();
     const html = await page.content();
-    await page.close();
+
     return { html, finalUrl };
-  } catch (err) {
+  } finally {
     try {
       await page.close();
-    } catch (_) {
+    } catch (e) {
       // ignore
     }
-    throw err;
+    try {
+      await context.close();
+    } catch (e) {
+      // ignore
+    }
   }
 };
+
+export async function closePlaywrightBrowser() {
+  if (_browser) {
+    try {
+      await _browser.close();
+    } catch (e) {
+      // ignore
+    }
+    _browser = null;
+  }
+}

@@ -14,5 +14,5 @@
     }
   },
   "include": ["./**/*.ts", "./custom.d.ts"],
-  "exclude": ["node_modules", "public", "dist"]
+  "exclude": ["node_modules", "public", "dist", "legacy"]
 }

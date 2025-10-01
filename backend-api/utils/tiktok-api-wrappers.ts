@@ -334,7 +334,7 @@ export const fetchPostByUrlAndMode = async (
   url: string,
   mode: (typeof URL_SANS_BOGUS)[keyof typeof URL_SANS_BOGUS],
   sessionToken?: string,
-  options?: { usePuppeteer?: boolean }
+  options?: { usePlaywright?: boolean }
 ) => {
   try {
     // Validate URL first
@@ -345,7 +345,7 @@ export const fetchPostByUrlAndMode = async (
     let response: Response | null = null;
     let finalURL: URL | null = null;
 
-    if (options?.usePuppeteer) {
+    if (options?.usePlaywright) {
       try {
         const { fetchPageWithPuppeteer } = await import('./puppeteer-fallback');
         const { html, finalUrl } = await fetchPageWithPuppeteer(url);
@@ -369,7 +369,7 @@ export const fetchPostByUrlAndMode = async (
           },
         } as unknown as Response;
       } catch (err) {
-        console.error('Puppeteer fallback failed:', err);
+        console.error('Playwright fallback failed:', err);
         // continue to normal fetch below
       }
     }
@@ -517,7 +517,7 @@ export const fetchPostByUrlAndMode = async (
         tiktokId: postID,
         postDesc: description,
         originalURL: normalizeOriginalUrl(finalURL.toString()),
-        usedPuppeteer: !!options?.usePuppeteer,
+        usedPuppeteer: !!options?.usePlaywright,
       });
 
       await createCarousel({
@@ -549,7 +549,7 @@ export const fetchPostByUrlAndMode = async (
         tiktokId: postID,
         postDesc: description,
         originalURL: normalizeOriginalUrl(finalURL.toString()),
-        usedPuppeteer: !!options?.usePuppeteer,
+        usedPuppeteer: !!options?.usePlaywright,
       });
 
       await createVideo({

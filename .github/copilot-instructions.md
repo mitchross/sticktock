@@ -13,6 +13,7 @@ Keep things focused: reference exact files, commands, and conventions rather tha
 - The frontend uses `service.config.ts` to configure API and domain URLs. When changing routes or ports update that file.
 - The backend stores static assets and the SQLite DB under `/var/local/sticktock` at runtime. That path is created and linked in `backend-api/utils/setup-funcs.ts` and must be present in Docker/stack deployments (see `docker-swarm-stack.yml` volume mapping).
 - TikTok data is fetched and parsed in `backend-api/utils/tiktok-api-wrappers.ts`. The code:
+  - uses Playwright (via `backend-api/utils/puppeteer-fallback.ts`) for browser-based rendering with stealth settings to avoid detection
   - follows redirects using `fetchAndFollowURL`
   - extracts TikTok rehydration data from the page DOM (see `parseTikTokData`)
   - constructs TikTok API URLs and computes an `X-Bogus` parameter with the `xbogus` package
@@ -32,11 +33,12 @@ Keep things focused: reference exact files, commands, and conventions rather tha
 5. Common tasks and where to edit
 - Add/modify API endpoints: `backend-api/routes/*` and wire them in `backend-api/index.ts`.
 - Add data model fields: update `backend-api/prisma/schema.prisma`, create a migration, and ensure `npm run build-prisma-client` / `npm run make-prisma-db` are run during build.
-- Work involving TikTok fetching should be limited to `backend-api/utils/tiktok-api-wrappers.ts` or `backend-api/legacy/*` helpers. Be cautious — TikTok scraping code contains fragile DOM parsing and xbogus computations.
+- Work involving TikTok fetching should be limited to `backend-api/utils/tiktok-api-wrappers.ts` or `backend-api/legacy/*` helpers. Be cautious — TikTok scraping code contains fragile DOM parsing and xbogus computations. The fetching uses Playwright with stealth settings (see `backend-api/utils/puppeteer-fallback.ts`). To opt-in to browser-based fetching, add `?fallback=playwright` to API requests.
 
 6. Security & operational notes (discoverable from code)
 - The backend CORS policy allows origin '*' and only GET methods; production deployments should lock this down in `backend-api/index.ts` if needed.
 - The app relies on `ffmpeg` for thumbnail extraction via `fluent-ffmpeg` and uses `ffmpeg-static` so it runs without external packages inside the image.
+- Playwright is used for browser-based fetching with stealth configurations. The Docker image must include Chromium binaries (installed via `npx playwright install --with-deps` in `backend-api/Dockerfile`).
 
 7. Examples snippets (copyable guidance for agents)
 - To fetch a post and store assets: call logic inside `fetchPostByUrlAndMode(url, URL_SANS_BOGUS.FETCH_POST)` — this function returns the Prisma `post` record or an Error; it also downloads assets to `public/` and creates DB rows.

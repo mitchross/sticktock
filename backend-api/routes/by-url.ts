@@ -15,12 +15,12 @@ export const getVideoByUrl: RequestHandler = async (req, res) => {
       res.status(400).send({ error: 'Provided URL looks like an asset, not a TikTok post' });
       return;
     }
-    const usePuppeteer = (req.query.fallback as string) === 'puppeteer';
+    const usePlaywright = (req.query.fallback as string) === 'playwright';
     const postData = await fetchPostByUrlAndMode(
       url,
       URL_SANS_BOGUS.FETCH_POST,
       undefined,
-      { usePuppeteer }
+      { usePlaywright }
     );
 
     if (postData && !(postData instanceof Error)) {

@@ -13,6 +13,10 @@ COPY . .
 # Install project dependencies
 RUN npm ci
 
+# Install Playwright browsers and required dependencies so Playwright can run in the container.
+# This will download browser binaries and run the dependency installer.
+RUN npx playwright install --with-deps || true
+
 # Build the project
 RUN npm run build
 
