@@ -13,10 +13,8 @@ COPY . .
 # Install project dependencies
 RUN npm ci
 
-# Install Playwright browsers and system dependencies
-# Must run as root BEFORE switching to node user
-# Install chromium browser for playwright-extra and system deps in one command
-RUN npx playwright install --with-deps chromium
+# Install system dependencies for Chromium (as root)
+RUN npx playwright install-deps chromium
 
 # Build the project
 RUN npm run build
@@ -25,8 +23,12 @@ RUN npm run build
 RUN mkdir -p /var/local/sticktock \
 	&& chown -R node:node /usr/src/app /var/local/sticktock
 
-# Drop root privileges
+# Switch to node user BEFORE installing browsers so they're owned by node
 USER node
+
+# Install Playwright browsers as the node user
+# This ensures browsers are installed in /home/node/.cache/ms-playwright with correct permissions
+RUN npx playwright install chromium
 
 VOLUME /var/local/sticktock
 
