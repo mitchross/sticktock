@@ -24,7 +24,7 @@ async function getBrowser(): Promise<Browser> {
   return _browser;
 }
 
-export const fetchPageWithPuppeteer = async (url: string, opts?: { timeoutMs?: number }): Promise<{ html: string; finalUrl: string }> => {
+export const fetchPageWithPlaywright = async (url: string, opts?: { timeoutMs?: number }): Promise<{ html: string; finalUrl: string; cookies: string }> => {
   const browser = await getBrowser();
   const context = await browser.newContext({
     viewport: { width: 1920, height: 1080 },
@@ -45,8 +45,14 @@ export const fetchPageWithPuppeteer = async (url: string, opts?: { timeoutMs?: n
 
     const finalUrl = page.url();
     const html = await page.content();
+    
+    // Get cookies from the browser context
+    const cookiesArray = await context.cookies();
+    const cookies = cookiesArray
+      .map((cookie: { name: string; value: string }) => `${cookie.name}=${cookie.value}`)
+      .join('; ');
 
-    return { html, finalUrl };
+    return { html, finalUrl, cookies };
   } finally {
     try {
       await page.close();

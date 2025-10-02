@@ -344,12 +344,14 @@ export const fetchPostByUrlAndMode = async (
 
     let response: Response | null = null;
     let finalURL: URL | null = null;
+    let playwrightCookies: string | undefined;
 
     if (options?.usePlaywright) {
       try {
-        const { fetchPageWithPuppeteer } = await import('./puppeteer-fallback');
-        const { html, finalUrl } = await fetchPageWithPuppeteer(url);
+        const { fetchPageWithPlaywright } = await import('./playwright-fallback');
+        const { html, finalUrl, cookies } = await fetchPageWithPlaywright(url);
         finalURL = new URL(finalUrl);
+        playwrightCookies = cookies; // Store cookies for later use in downloads
         // build a minimal Response-like object for parseTikTokData
         response = {
           ok: true,
@@ -533,14 +535,14 @@ export const fetchPostByUrlAndMode = async (
           video.url,
           videoDirPath,
           videoFilePath,
-          joinedCookies
+          playwrightCookies || joinedCookies // Use Playwright cookies if available
         );
       }
 
       const thumbnailDirPath = path.join(process.cwd(), 'public', 'thumbnails');
       const thumbnailFilePath = path.join(thumbnailDirPath, `${postID}.jpg`);
       if (video.cover) {
-        downloadFileHelper(video.cover, videoDirPath, thumbnailFilePath);
+        downloadFileHelper(video.cover, videoDirPath, thumbnailFilePath, playwrightCookies || joinedCookies);
       }
 
       const post = await createPost({
