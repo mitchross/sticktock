@@ -15,6 +15,7 @@ import path from 'path';
 import { downloadFileHelper, ensureDirectoryExistence } from './disk-utils';
 import { parsedVideoData } from './zod';
 import logger from './logger';
+import { fetchTikTokWithPatchright } from './patchright-helper';
 
 export const userAgent =
   'Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.1';
@@ -75,40 +76,43 @@ export const parseTikTokData = async (res: Response) => {
 
     logger.info('Response content length:', textContent.length);
 
-    const dom = new jsdom.JSDOM(textContent);
-    const rehydrationElement = dom.window.document.querySelector(
-      '#__UNIVERSAL_DATA_FOR_REHYDRATION__'
-    );
+    return parseTikTokHTML(textContent, cookies);
+  } catch (error) {
+    console.error('Parse TikTok Data Error:', error);
+    throw error;
+  }
+};
 
-    if (!rehydrationElement) {
-      logger.info('Rehydration element not found in DOM');
-      // Try fallback data extraction
-      const scriptElements = dom.window.document.querySelectorAll('script');
-      for (const script of scriptElements) {
-        const content = script.textContent || '';
-        if (content.includes('SIGI_STATE')) {
-          const match = content.match(/SIGI_STATE["]?\s*=\s*({.+?});/);
-          if (match && match[1]) {
-            const jsonParseData = JSON.parse(match[1]);
-            return extractDataFromJson(jsonParseData, cookies);
-          }
+/**
+ * Parse TikTok HTML content - extracted for reuse with Patchright
+ */
+const parseTikTokHTML = (textContent: string, cookies: string[]) => {
+  const dom = new jsdom.JSDOM(textContent);
+  const rehydrationElement = dom.window.document.querySelector(
+    '#__UNIVERSAL_DATA_FOR_REHYDRATION__'
+  );
+
+  if (!rehydrationElement) {
+    logger.info('Rehydration element not found in DOM');
+    // Try fallback data extraction
+    const scriptElements = dom.window.document.querySelectorAll('script');
+    for (const script of scriptElements) {
+      const content = script.textContent || '';
+      if (content.includes('SIGI_STATE')) {
+        const match = content.match(/SIGI_STATE["]?\s*=\s*({.+?});/);
+        if (match && match[1]) {
+          const jsonParseData = JSON.parse(match[1]);
+          return extractDataFromJson(jsonParseData, cookies);
         }
       }
-      throw new Error('Could not find TikTok data in page');
     }
+    throw new Error('Could not find TikTok data in page');
+  }
 
-    const rehydrationData = rehydrationElement.textContent;
-    if (!rehydrationData) {
-      throw new Error('Rehydration data is empty');
-    }
-
-    let jsonParseData;
-    try {
-      jsonParseData = JSON.parse(rehydrationData);
-    } catch (e) {
-      console.error('JSON parse error:', e);
-      throw new Error('Failed to parse rehydration data');
-    }
+  const rehydrationData = rehydrationElement.textContent;
+  if (!rehydrationData) {
+    throw new Error('Rehydration data is empty');
+  }
 
     return extractDataFromJson(jsonParseData, cookies);
   } catch (error) {
@@ -125,6 +129,8 @@ export const parseTikTokData = async (res: Response) => {
     }
     throw error;
   }
+
+  return extractDataFromJson(jsonParseData, cookies);
 };
 
 // Helper function to extract data from JSON
@@ -218,15 +224,45 @@ export const fetchAndFollowURL = async (url: string) => {
   const decodeURI = decodeURIComponent(url);
   let parsedURL = new URL(url);
   throwIfBaseDomainIsNotInWhitelist(parsedURL);
+
+  // Use Patchright fallback if requested or if standard fetch fails
+  if (usePatchright) {
+    try {
+      logger.info('Using Patchright fallback for:', url);
+      const { html, cookies } = await fetchTikTokWithPatchright(url);
+      
+      // Create a mock Response-like object
+      const mockResponse = {
+        ok: true,
+        status: 200,
+        text: async () => html,
+        headers: new Headers({
+          'set-cookie': cookies.join('; '),
+        }),
+        url: url,
+      } as Response;
+
+      return {
+        response: mockResponse,
+        url: parsedURL,
+      };
+    } catch (error) {
+      console.error('Patchright fallback failed:', error);
+      throw error;
+    }
+  }
+
   setTimeout(() => {
     controller.abort();
   }, 1000 * 50);
+  
   let fetchContent = await fetch(decodeURI, {
     signal: controller.signal,
     headers: {
       'User-Agent': userAgent,
     },
   });
+  
   const fetchURL = fetchContent.url;
   logger.info(fetchContent.url);
   if (
@@ -408,7 +444,10 @@ export const fetchPostByUrlAndMode = async (
       return findPost;
     }
 
-    const parseData = await parseTikTokData(response);
+    const parseData = usedPatchright
+      ? await parseTikTokHTML(await response.text(), [])
+      : await parseTikTokData(response);
+      
     if (!parseData || parseData instanceof Error) {
       throw new Error('Failed to parse TikTok data');
     }

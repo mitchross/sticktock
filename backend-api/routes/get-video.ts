@@ -15,6 +15,7 @@ import {
 import { isLikelyAssetUrl } from '../utils/url-helpers';
 import { checkAndCleanPublicFolder } from '../utils/disk-utils';
 import logger from '../utils/logger';
+import { fetchPostByUrlAndMode, URL_SANS_BOGUS } from '../utils/tiktok-api-wrappers';
 
 const tiktoks = [
   //video
@@ -80,7 +81,7 @@ export const getVideo: RequestHandler = async (req, res) => {
   try {
     const { url } = req.params;
     logger.info('Running quickfetch');
-    const quickFetch = await downloadThroughFetch(url);
+    const quickFetch = await fetchPostByUrlAndMode(url, URL_SANS_BOGUS.FETCH_POST);
     logger.info({
       quickFetch,
     });
@@ -91,8 +92,9 @@ export const getVideo: RequestHandler = async (req, res) => {
       logger.info('Is deleted: ', quickFetch.deleted);
       if (quickFetch.deleted) {
         logger.info("Fetching post again because it's deleted");
-        const post = await justFetchPost(
-          quickFetch.originalURL.length > 0 ? quickFetch.originalURL : url
+        const post = await fetchPostByUrlAndMode(
+          quickFetch.originalURL.length > 0 ? quickFetch.originalURL : url,
+          URL_SANS_BOGUS.FETCH_POST
         );
         logger.info('Post fetched');
         logger.info({
@@ -178,7 +180,7 @@ export const getVideoById: RequestHandler = async (req, res) => {
       logger.info(findPost.id);
       logger.info('Is deleted: ', findPost.deleted);
       if (findPost.deleted && findPost.originalURL) {
-        await justFetchPost(findPost.originalURL);
+        await fetchPostByUrlAndMode(findPost.originalURL, URL_SANS_BOGUS.FETCH_POST);
       } else if (findPost.deleted && !findPost.originalURL.length) {
         res.status(400).send({
           error: 'File not found',

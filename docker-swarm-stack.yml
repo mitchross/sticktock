@@ -8,6 +8,9 @@ services:
       - '3000:3000'
     networks:
       - api
+    environment:
+      - NODE_ENV=production
+      - DOCKER_ENV=swarm
   
   backend-api:
     image: sticktock-api
@@ -17,6 +20,8 @@ services:
       - api
     volumes:
       - /var/local/sticktock-api-data:/var/local/sticktock/
+    environment:
+      - NODE_ENV=production
 
 networks:
   api:

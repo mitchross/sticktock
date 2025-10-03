@@ -148,8 +148,9 @@ export const HomePage = () => {
 
         <button
           onClick={async () => {
+            const apiUrl = getApiUrl();
             const latestPost = await fetch(
-              `${API_URL_FOR_BROWSER}/latest`
+              `${apiUrl}/latest`
             ).then((res) => res.json());
             if (latestPost) {
               window.location.href = `/post/${latestPost.id}`;
