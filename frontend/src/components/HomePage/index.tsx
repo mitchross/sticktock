@@ -3,7 +3,8 @@ import { FormEventHandler, useCallback, useState } from 'react';
 import styles from './style.module.scss';
 import { LoadingSpinner } from '../Loading';
 import { checkURL } from '../../../utils/strings/check-url';
-import { API_URL_FOR_BROWSER, BASE_DOMAIN } from '../../../service.config';
+import { BASE_DOMAIN } from '../../../service.config';
+import { getApiUrl } from '../../utils/api-config';
 
 const ONION_HOST = 'b7vypdv52igjfg7vwhlofny45koaa4ltletx67ranlwfotiiqwza2eyd.onion';
 
@@ -23,8 +24,9 @@ export const HomePage = () => {
         }
         setLoading(true);
         setError('');
+        const apiUrl = getApiUrl();
         const videoData = await fetch(
-          `${API_URL_FOR_BROWSER}/by_url/${encodeURIComponent(
+          `${apiUrl}/by_url/${encodeURIComponent(
             videoURL
           )}`
         ).then((res) => res.json());
@@ -117,8 +119,9 @@ export const HomePage = () => {
 
         <button
           onClick={async () => {
+            const apiUrl = getApiUrl();
             const latestPost = await fetch(
-              `${API_URL_FOR_BROWSER}/latest`
+              `${apiUrl}/latest`
             ).then((res) => res.json());
             if (latestPost) {
               window.location.href = `/post/${latestPost.id}`;
