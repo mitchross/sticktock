@@ -4,15 +4,23 @@ import {
   fetchPostByUrlAndMode,
   URL_SANS_BOGUS,
 } from '../utils/tiktok-api-wrappers';
+import { isLikelyAssetUrl } from '../utils/url-helpers';
 import { checkAndCleanPublicFolder } from '../utils/disk-utils';
 import logger from '../utils/logger';
 
 export const getVideoByUrl: RequestHandler = async (req, res) => {
   try {
     const { url } = req.params;
+    if (isLikelyAssetUrl(url)) {
+      res.status(400).send({ error: 'Provided URL looks like an asset, not a TikTok post' });
+      return;
+    }
+    const usePlaywright = (req.query.fallback as string) === 'playwright';
     const postData = await fetchPostByUrlAndMode(
       url,
-      URL_SANS_BOGUS.FETCH_POST
+      URL_SANS_BOGUS.FETCH_POST,
+      undefined,
+      { usePlaywright }
     );
 
     if (postData && !(postData instanceof Error)) {

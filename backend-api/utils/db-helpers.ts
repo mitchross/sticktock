@@ -205,6 +205,7 @@ export async function createPost(postData: {
   carouselId?: number; // Optional, assuming carousel is a related model and might not always be present
   postDesc?: string;
   originalURL: string;
+  usedPuppeteer?: boolean;
 }) {
   const { authorId, type, tiktokId, videoId, carouselId, originalURL } =
     postData;
@@ -214,6 +215,7 @@ export async function createPost(postData: {
       type,
       tiktokId,
       originalURL,
+      usedPuppeteer: postData.usedPuppeteer ?? false,
       video: videoId ? { connect: { id: videoId } } : undefined,
       carousel: carouselId ? { connect: { id: carouselId } } : undefined,
       postDescription: postData.postDesc,

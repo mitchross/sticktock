@@ -59,6 +59,9 @@ export const parseTikTokData = async (res: Response) => {
       throw new Error(`HTTP Response not OK: ${res.status}`);
     }
 
+    // Clone the response so parsing/logging does not consume the original body
+    const resClone = res.clone();
+
     let cookies: string[] = [];
     for (let [key, value] of res.headers.entries()) {
       if (key.toLowerCase() === 'set-cookie') {
@@ -66,7 +69,7 @@ export const parseTikTokData = async (res: Response) => {
       }
     }
 
-    const textContent = await res.text();
+    const textContent = await resClone.text();
     if (!textContent) {
       throw new Error('Empty response content');
     }
@@ -111,12 +114,20 @@ const parseTikTokHTML = (textContent: string, cookies: string[]) => {
     throw new Error('Rehydration data is empty');
   }
 
-  let jsonParseData;
-  try {
-    jsonParseData = JSON.parse(rehydrationData);
-  } catch (e) {
-    console.error('JSON parse error:', e);
-    throw new Error('Failed to parse rehydration data');
+    return extractDataFromJson(jsonParseData, cookies);
+  } catch (error) {
+    try {
+      // Attempt to log helpful debug info: status, url and a small snippet of the page
+      const snippet = typeof (await (res.clone()).text()) === 'string'
+        ? (await res.clone().text()).slice(0, 2000)
+        : '';
+      console.error('Parse TikTok Data Error:', error);
+      console.error('Response status:', (res as any).status, 'url:', (res as any).url);
+      console.error('Response snippet:', snippet);
+    } catch (logErr) {
+      console.error('Parse TikTok Data Error (failed to capture snippet):', logErr);
+    }
+    throw error;
   }
 
   return extractDataFromJson(jsonParseData, cookies);
@@ -182,7 +193,33 @@ function throwIfBaseDomainIsNotInWhitelist(url: URL): void {
   throw new Error(errMsg);
 }
 
-export const fetchAndFollowURL = async (url: string, usePatchright = false) => {
+// Normalize original URL by removing common transient/tracking query params
+const normalizeOriginalUrl = (urlString: string) => {
+  try {
+    const u = new URL(urlString);
+    const toRemove = [
+      'is_from_webapp',
+      'sender_device',
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'utm_term',
+      'utm_content',
+      'fbclid'
+    ];
+    for (const k of toRemove) {
+      u.searchParams.delete(k);
+    }
+    // optional: sort params for canonical form
+    const params = [...u.searchParams.entries()].sort();
+    u.search = params.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+    return u.toString();
+  } catch (e) {
+    return urlString;
+  }
+};
+
+export const fetchAndFollowURL = async (url: string) => {
   const controller = new AbortController();
   const decodeURI = decodeURIComponent(url);
   let parsedURL = new URL(url);
@@ -332,7 +369,8 @@ export const pullVideoData = async (
 export const fetchPostByUrlAndMode = async (
   url: string,
   mode: (typeof URL_SANS_BOGUS)[keyof typeof URL_SANS_BOGUS],
-  sessionToken?: string
+  sessionToken?: string,
+  options?: { usePlaywright?: boolean }
 ) => {
   try {
     // Validate URL first
@@ -340,27 +378,60 @@ export const fetchPostByUrlAndMode = async (
       throw new Error('Invalid URL provided');
     }
 
-    // Try standard fetch first
-    let response: Response;
-    let finalURL: URL;
-    let usedPatchright = false;
+    let response: Response | null = null;
+    let finalURL: URL | null = null;
+    let playwrightCookies: string | undefined;
 
-    try {
-      const result = await fetchAndFollowURL(url, false);
-      response = result.response;
-      finalURL = result.url;
-    } catch (fetchError) {
-      console.error('Standard fetch failed, trying Patchright fallback:', fetchError);
-      // Fallback to Patchright
-      const result = await fetchAndFollowURL(url, true);
-      response = result.response;
-      finalURL = result.url;
-      usedPatchright = true;
-      logger.info('Successfully used Patchright fallback');
+    if (options?.usePlaywright) {
+      try {
+        const { fetchPageWithPlaywright } = await import('./playwright-fallback');
+        const { html, finalUrl, cookies } = await fetchPageWithPlaywright(url);
+        finalURL = new URL(finalUrl);
+        playwrightCookies = cookies; // Store cookies for later use in downloads
+        // build a minimal Response-like object for parseTikTokData
+        response = {
+          ok: true,
+          status: 200,
+          url: finalUrl,
+          headers: {
+            entries() {
+              return [] as any;
+            },
+            get() {
+              return null;
+            },
+          } as unknown as Headers,
+          text: async () => html,
+          clone() {
+            return this;
+          },
+        } as unknown as Response;
+      } catch (err) {
+        console.error('Playwright fallback failed:', err);
+        // continue to normal fetch below
+      }
+    }
+
+    if (!response || !finalURL) {
+      const { response: fetchedResponse, url: fetchedUrl } = await fetchAndFollowURL(url);
+      response = fetchedResponse;
+      finalURL = fetchedUrl;
     }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // If the final URL is not a TikTok post page (e.g. an asset or 404 redirect), bail early.
+    const pathname = finalURL.pathname || '';
+    const looksLikePost = /\/video\//.test(pathname) || /item\/detail/.test(finalURL.href) || /\/v\//.test(pathname);
+    if (!looksLikePost) {
+      console.error('fetchPostByUrlAndMode: resolved URL is not a TikTok post page', {
+        originalUrl: url,
+        finalUrl: finalURL.toString(),
+        status: response.status,
+      });
+      return new Error('Resolved URL is not a TikTok post page');
     }
 
     const postId = finalURL.pathname.split('/').at(-1);
@@ -486,7 +557,8 @@ export const fetchPostByUrlAndMode = async (
         type: 'photo',
         tiktokId: postID,
         postDesc: description,
-        originalURL: finalURL.toString(),
+        originalURL: normalizeOriginalUrl(finalURL.toString()),
+        usedPuppeteer: !!options?.usePlaywright,
       });
 
       await createCarousel({
@@ -502,14 +574,14 @@ export const fetchPostByUrlAndMode = async (
           video.url,
           videoDirPath,
           videoFilePath,
-          joinedCookies
+          playwrightCookies || joinedCookies // Use Playwright cookies if available
         );
       }
 
       const thumbnailDirPath = path.join(process.cwd(), 'public', 'thumbnails');
       const thumbnailFilePath = path.join(thumbnailDirPath, `${postID}.jpg`);
       if (video.cover) {
-        downloadFileHelper(video.cover, videoDirPath, thumbnailFilePath);
+        downloadFileHelper(video.cover, videoDirPath, thumbnailFilePath, playwrightCookies || joinedCookies);
       }
 
       const post = await createPost({
@@ -517,7 +589,8 @@ export const fetchPostByUrlAndMode = async (
         type: 'video',
         tiktokId: postID,
         postDesc: description,
-        originalURL: finalURL.toString(),
+        originalURL: normalizeOriginalUrl(finalURL.toString()),
+        usedPuppeteer: !!options?.usePlaywright,
       });
 
       await createVideo({

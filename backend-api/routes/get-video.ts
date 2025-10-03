@@ -7,6 +7,12 @@ import {
   openDb,
   updateSession,
 } from '../utils/db-helpers';
+import {
+  downloadThroughFetch,
+  getRelatedPosts,
+  justFetchPost,
+} from '../legacy/old-fetching-helpers';
+import { isLikelyAssetUrl } from '../utils/url-helpers';
 import { checkAndCleanPublicFolder } from '../utils/disk-utils';
 import logger from '../utils/logger';
 import { fetchPostByUrlAndMode, URL_SANS_BOGUS } from '../utils/tiktok-api-wrappers';
@@ -22,6 +28,10 @@ openDb();
 export const getRelatedVideos: RequestHandler = async (req, res) => {
   try {
     const { url } = req.params;
+    if (isLikelyAssetUrl(url)) {
+      res.status(400).send({ error: 'Provided URL looks like an asset, not a TikTok post' });
+      return;
+    }
     const { sessiontoken } = req.headers;
     let sessionParsed =
       typeof sessiontoken === 'string'
@@ -36,9 +46,12 @@ export const getRelatedVideos: RequestHandler = async (req, res) => {
         userSession = await createSession(sessionParsed);
       }
     }
-    logger.info('Running quickfetch');
+  logger.info('Running quickfetch');
+  const usePuppeteer = (req.query.fallback as string) === 'puppeteer';
 
-    const fetchRelatedPosts = await fetchPostByUrlAndMode(url, URL_SANS_BOGUS.RELATED_POSTS, userSession?.token);
+  // getRelatedPosts currently uses legacy helpers; leaving as-is but
+  // future work could thread `usePuppeteer` into modern fetchers.
+  const fetchRelatedPosts = await getRelatedPosts(url, userSession?.token);
     logger.info({
       fetchRelatedPosts,
     });

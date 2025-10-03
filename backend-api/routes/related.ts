@@ -29,10 +29,12 @@ export const getRelatedVideos: RequestHandler = async (req, res) => {
         userSession = await createSession(sessionParsed);
       }
     }
+    const usePlaywright = (req.query.fallback as string) === 'playwright';
     const postData = await fetchPostByUrlAndMode(
       url,
       URL_SANS_BOGUS.RELATED_POSTS,
-      userSession?.token
+      userSession?.token,
+      { usePlaywright }
     );
 
     if (!postData || postData instanceof Error) {

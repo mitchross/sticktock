@@ -1,140 +1,54 @@
-# StickTock AI Coding Guide
+## StickTock — Developer guidance for AI coding agents
 
-## Architecture Overview
+This file captures the minimal, actionable knowledge an AI coding agent needs to be productive in the StickTock repo.
 
-StickTock is a privacy-focused TikTok proxy with a **Docker Swarm** deployment architecture:
+Keep things focused: reference exact files, commands, and conventions rather than generic advice.
 
-- **Backend API** (Express/TypeScript on port 2000): Fetches TikTok videos via web scraping, stores metadata in SQLite (Prisma ORM), and manages local video files
-- **Frontend** (Next.js 14 on port 3000): Server-side rendered pages with client components for video playback
-- **Data Flow**: Frontend SSR → Backend API → TikTok scraping → Local file storage (`/var/local/sticktock/`)
+1. Big picture
+- Two primary services live in this repo:
+  - `frontend/` — Next.js app (port 3000). Key files: `frontend/service.config.ts`, `frontend/package.json`, `frontend/Dockerfile`, `src/app/*`.
+  - `backend-api/` — Express + Prisma API (port 2000). Key files: `backend-api/index.ts`, `backend-api/routes/*`, `backend-api/utils/*`, `backend-api/prisma/schema.prisma`.
 
-Key architectural decisions:
-- **No client-side TikTok calls**: All TikTok scraping happens server-side to protect user privacy
-- **Soft-delete caching**: Videos are cached and soft-deleted when storage exceeds 25GB (see `checkAndCleanPublicFolder`)
-- **URL rewriting**: Users replace `tiktok.com` with `sticktock.com` in URLs for instant proxying
+2. Important data flow and integrations
+- The frontend uses `service.config.ts` to configure API and domain URLs. When changing routes or ports update that file.
+- The backend stores static assets and the SQLite DB under `/var/local/sticktock` at runtime. That path is created and linked in `backend-api/utils/setup-funcs.ts` and must be present in Docker/stack deployments (see `docker-swarm-stack.yml` volume mapping).
+- TikTok data is fetched and parsed in `backend-api/utils/tiktok-api-wrappers.ts`. The code:
+  - uses Playwright (via `backend-api/utils/puppeteer-fallback.ts`) for browser-based rendering with stealth settings to avoid detection
+  - follows redirects using `fetchAndFollowURL`
+  - extracts TikTok rehydration data from the page DOM (see `parseTikTokData`)
+  - constructs TikTok API URLs and computes an `X-Bogus` parameter with the `xbogus` package
+  - stores media files in `public/{videos,thumbnails,audio,images,authors}` and creates DB rows via `backend-api/utils/db-helpers.ts` (Prisma client).
 
-## Critical Configuration
+3. Build / dev / deploy commands (exact)
+- Local frontend dev: from `frontend/`: `npm run dev` (Next.js dev server on 3000).
+- Local backend dev: in `backend-api/` the repo uses `tsx --watch` for development; but container builds run `npm run build` which does `npx prisma generate`, `npx prisma migrate deploy`, then `tsc`. See `backend-api/package.json` scripts.
+- Build both images & redeploy stack (recommended): run project root `./reload-stack.sh --build-webapp --build-api` (requires Docker in swarm mode). The helper `rebuild-frontend.sh` builds only the frontend image for k8s/workflow testing.
+- Compose stack file: `docker-swarm-stack.yml` exposes ports 3000 and 2000 and maps `/var/local/sticktock-api-data` to `/var/local/sticktock/` in the backend container — ensure the host volume exists and is writable.
 
-### 1. Domain Configuration (Required Before Deployment)
-Edit `frontend/service.config.ts` with your actual domains:
-```typescript
-export const BASE_DOMAIN = 'example.com'; // Change this!
-export const API_URL_FOR_BROWSER = `https://api.${BASE_DOMAIN}`;
-export const API_URL_FOR_SERVER = `http://backend-api:2000`; // Docker internal
-```
-**Wrong domains = broken API calls and hard-to-debug CORS issues.**
+4. Project conventions and patterns to follow
+- Static assets are served from the `public` folder and the backend creates a symlink from `/var/local/sticktock/public` -> `public` at runtime. Avoid hardcoding absolute paths except via `setupVarDataFolder()`.
+- Database: Prisma + SQLite. Migrations live in `backend-api/prisma/migrations`. The runtime SQLite file is expected in `/var/local/sticktock/prisma-db.sqlite*` (setup code will copy the packaged DB file into the data folder if absent).
+- Error handling style: routes return simple JSON errors and log with `logger` from `backend-api/utils/logger.ts`. Follow the same minimal pattern when adding routes.
 
-### 2. Database Setup
-Backend uses SQLite with Prisma. Database location is set via environment variable:
-- **Production**: `DATABASE_URL="file:/var/local/sticktock/prisma-db.sqlite"` (mounted volume)
-- **Development**: `DATABASE_URL="file:./prisma-db.sqlite"` (local)
+5. Common tasks and where to edit
+- Add/modify API endpoints: `backend-api/routes/*` and wire them in `backend-api/index.ts`.
+- Add data model fields: update `backend-api/prisma/schema.prisma`, create a migration, and ensure `npm run build-prisma-client` / `npm run make-prisma-db` are run during build.
+- Work involving TikTok fetching should be limited to `backend-api/utils/tiktok-api-wrappers.ts` or `backend-api/legacy/*` helpers. Be cautious — TikTok scraping code contains fragile DOM parsing and xbogus computations. The fetching uses Playwright with stealth settings (see `backend-api/utils/puppeteer-fallback.ts`). To opt-in to browser-based fetching, add `?fallback=playwright` to API requests.
 
-Volume mount in `docker-swarm-stack.yml` must exist or deployment silently fails.
+6. Security & operational notes (discoverable from code)
+- The backend CORS policy allows origin '*' and only GET methods; production deployments should lock this down in `backend-api/index.ts` if needed.
+- The app relies on `ffmpeg` for thumbnail extraction via `fluent-ffmpeg` and uses `ffmpeg-static` so it runs without external packages inside the image.
+- Playwright is used for browser-based fetching with stealth configurations. The Docker image must include Chromium binaries (installed via `npx playwright install --with-deps` in `backend-api/Dockerfile`).
 
-## Development Workflows
+7. Examples snippets (copyable guidance for agents)
+- To fetch a post and store assets: call logic inside `fetchPostByUrlAndMode(url, URL_SANS_BOGUS.FETCH_POST)` — this function returns the Prisma `post` record or an Error; it also downloads assets to `public/` and creates DB rows.
+- To serve a new route that returns the latest post: add a handler in `backend-api/routes/` and mount it in `backend-api/index.ts` alongside `/latest`.
 
-### Building & Deploying
-```bash
-# Full rebuild with both services
-./reload-stack.sh --build-webapp --build-api
+8. Files worth reading before making changes
+- `backend-api/utils/tiktok-api-wrappers.ts` — TikTok parsing and download logic (fragile, high-risk changes)
+- `backend-api/utils/db-helpers.ts` — Prisma usage patterns and helper functions
+- `backend-api/utils/setup-funcs.ts` — how the runtime data folder and symlinks are created
+- `frontend/service.config.ts` — environment variables and API URL configuration for the frontend
+- `docker-swarm-stack.yml`, `reload-stack.sh`, `rebuild-frontend.sh` — deployment helpers
 
-# Single service rebuild
-./reload-stack.sh --build-api
-
-# Stop stack
-docker stack rm sticktock
-
-# Check service status (if deployment seems stuck)
-docker service ls
-```
-
-Images are tagged with timestamps (`2025-01-15_14-30`) and aliased as `latest`. The script auto-rebuilds with `--no-cache`.
-
-### Local Development (Without Docker)
-Backend:
-```bash
-cd backend-api
-npm run dev  # tsx watch mode with nodemon
-```
-
-Frontend:
-```bash
-cd frontend
-npm run dev  # Next.js dev server
-```
-
-**Note**: Prisma client must be generated before running: `npm run build-prisma-client`
-
-## Project-Specific Patterns
-
-### 1. TikTok Scraping Flow (`backend-api/utils/tiktok-api-wrappers.ts`)
-```typescript
-fetchPostByUrlAndMode(url, URL_SANS_BOGUS.FETCH_POST) →
-  fetchAndFollowURL() →          // Follows redirects, validates whitelist
-  parseTikTokData() →            // Extracts deviceId/odinId from DOM
-  xbogus(URL, userAgent) →       // Generates X-Bogus parameter (anti-bot)
-  pullVideoData() →              // Parses JSON, downloads files
-  createPost() + createVideo()   // Saves to database
-```
-
-**Patchright Fallback**: If standard fetch fails (anti-bot detection), automatically falls back to Patchright (undetected Chromium) for stealth scraping. Patchright bypasses Cloudflare, Kasada, Datadome, and other anti-bot systems.
-
-**Domain whitelist** (`BASE_DOMAINS_WHITELIST`) prevents SSRF attacks. Never remove this validation.
-
-### 2. File Management Conventions
-- Videos: `/public/videos/{tiktokId}.mp4`
-- Thumbnails: `/public/thumbnails/{tiktokId}.jpg`
-- Carousels: `/public/images/{tiktokId}/{index}.jpg`
-- Authors: `/public/authors/{authorId}.jpg`
-
-Storage cleanup runs after each request via `checkAndCleanPublicFolder()`. When >25GB, oldest non-deleted posts are purged (soft-delete in DB, hard-delete files).
-
-### 3. Database Schema Patterns
-```prisma
-Post → Author (many-to-one)
-Post → Video | Carousel (one-to-one, nullable)
-Session.watched: comma-separated TikTok IDs
-```
-
-**Deleted field**: Posts are soft-deleted (`deleted: true`) but can be restored if re-requested (see `restorePost()`). This allows re-fetching videos on-demand.
-
-### 4. Next.js SSR Strategy
-All post pages (`/post/[id]`) use **Server Components** that:
-1. Fetch post data via internal API route (`/api/post/[id]`)
-2. Generate OpenGraph metadata with video URLs for social sharing
-3. Pass session tokens via cookies for "watched videos" tracking
-
-Frontend calls backend using `API_URL_FOR_SERVER` (Docker internal network) during SSR, and `API_URL_FOR_BROWSER` for client-side metadata.
-
-### 5. Video Player Custom Controls (`frontend/src/components/VideoPlayer`)
-- **Tap sides to 2x speed**: Touch/hold left or right 2/3 of video
-- **Swipe to scrub**: Horizontal swipe adjusts `currentTime` (sensitivity: 0.025)
-- **IntersectionObserver auto-play**: Videos auto-play when 50% visible in feed
-
-## Common Pitfalls
-
-1. **Missing volume mount**: Backend crashes if `/var/local/sticktock/` doesn't exist. Check `docker service ps sticktock_backend-api` for errors.
-
-2. **Prisma client out of sync**: After schema changes, run:
-   ```bash
-   npx prisma migrate dev     # Creates migration
-   npm run build-prisma-client # Regenerates client
-   ```
-
-3. **xbogus library failures**: TikTok's anti-bot system requires the `xbogus` npm package. If scraping breaks, the system automatically falls back to Patchright (undetected Chromium browser automation).
-
-4. **CORS issues**: Ensure `cors({ origin: '*' })` in `backend-api/index.ts` allows frontend domain. Check `service.config.ts` URLs match actual deployment.
-
-5. **Session token format**: `frontend/src/app/post/[id]/page.tsx` parses cookies manually. Cookie name must be `sessiontoken` (lowercase).
-
-## Testing Changes
-
-No automated test suite exists. Manual testing workflow:
-1. Build: `./reload-stack.sh --build-api --build-webapp`
-2. Check deployment: `docker service ls` (ensure 1/1 replicas)
-3. Test URL conversion: `https://www.sticktock.com/post/7123456789` should load video
-4. Verify storage cleanup: Check logs with `docker service logs sticktock_backend-api`
-
-## License & Attribution
-
-AGPLv3 licensed. Derived from [offtiktok](https://github.com/MarsHeer/offtiktok) (MIT). All contributions must maintain AGPL compatibility.
+If anything above is unclear or you want the agent to follow stricter rules (style, test coverage, commit message format), tell me and I will iterate. 

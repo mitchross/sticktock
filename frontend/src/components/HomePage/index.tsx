@@ -1,10 +1,10 @@
 'use client';
-import { FormEventHandler, useCallback, useState } from 'react';
+import { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import styles from './style.module.scss';
 import { LoadingSpinner } from '../Loading';
 import { checkURL } from '../../../utils/strings/check-url';
-import { BASE_DOMAIN } from '../../../service.config';
-import { getApiUrl } from '../../utils/api-config';
+import { isLikelyAssetUrl } from '../../utils/check-url';
+import { API_URL_FOR_BROWSER, BASE_DOMAIN } from '../../../service.config';
 
 const ONION_HOST = 'b7vypdv52igjfg7vwhlofny45koaa4ltletx67ranlwfotiiqwza2eyd.onion';
 
@@ -12,6 +12,7 @@ export const HomePage = () => {
   const [videoURL, setVideoURL] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [usePlaywright, setUsePlaywright] = useState(false);
   const getVideo: FormEventHandler<HTMLFormElement> = useCallback(
     async (e) => {
       try {
@@ -22,13 +23,16 @@ export const HomePage = () => {
           setError('Please enter a valid TikTok video URL');
           return;
         }
+
+        if (isLikelyAssetUrl(videoURL)) {
+          setError('That looks like an image or media URL; paste the TikTok post URL instead.');
+          return;
+        }
         setLoading(true);
         setError('');
-        const apiUrl = getApiUrl();
+        const fallbackQuery = usePlaywright ? '?fallback=playwright' : '';
         const videoData = await fetch(
-          `${apiUrl}/by_url/${encodeURIComponent(
-            videoURL
-          )}`
+          `${API_URL_FOR_BROWSER}/by_url/${encodeURIComponent(videoURL)}${fallbackQuery}`
         ).then((res) => res.json());
         setLoading(false);
 
@@ -49,8 +53,18 @@ export const HomePage = () => {
         }
       }
     },
-    [videoURL]
+    [videoURL, usePlaywright]
   );
+
+  const [displayDomain, setDisplayDomain] = useState(
+    BASE_DOMAIN || 'your-domain.example'
+  );
+
+  useEffect(() => {
+    if (!BASE_DOMAIN && typeof window !== 'undefined') {
+      setDisplayDomain(window.location.host);
+    }
+  }, []);
 
   return (
     <div className="w-full px-5 container md:max-w-lg mx-auto flex flex-col items-center">
@@ -94,10 +108,25 @@ export const HomePage = () => {
         </button>
       </form>
 
+      <div className="w-full flex items-center mt-3 mb-6">
+        <input
+          id="use-playwright"
+          type="checkbox"
+          checked={usePlaywright}
+          onChange={(e) => setUsePlaywright(e.target.checked)}
+          className="mr-2"
+        />
+        <label htmlFor="use-playwright" className="text-sm text-blue">
+          Use browser rendering (Playwright) for better compatibility
+        </label>
+      </div>
+
       <p className="articulat text-sm my-5 text-blue text-center margin-bottom-48">
         {loading
           ? 'Processing video, this could take a minute...'
-          : [ `Or replace "tiktok.com" with "${BASE_DOMAIN}" in your video URL.` ]}
+          : [
+              `Or replace "tiktok.com" with "${displayDomain}" in your video URL.`,
+            ]}
         &nbsp;&nbsp;
         <a
           href="https://bitsontape.com/p/sticktock-share-tiktok-videos"

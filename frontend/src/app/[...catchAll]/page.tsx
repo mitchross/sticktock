@@ -5,6 +5,16 @@ const proccess = async (catchAll: string[]) => {
   try {
     const buildUrl = `https://tiktok.com/${catchAll.join('/')}`;
 
+    // quick server-side guard for obvious asset paths
+    try {
+      const u = new URL(buildUrl);
+      if (/\.(jpg|jpeg|png|gif|mp4|webm|svg|ico)(\?|$)/i.test(u.pathname) || /\/authors\//.test(u.pathname)) {
+        return { redirectTarget: '/404' };
+      }
+    } catch (e) {
+      // ignore
+    }
+
     const getData = await fetch(
       `${API_URL_FOR_SERVER}/by_url/${encodeURIComponent(
         buildUrl

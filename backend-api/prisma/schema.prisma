@@ -46,6 +46,7 @@ model Post {
     carousel    Carousel?
     postDescription String?
     originalURL String   @default("")
+    usedPuppeteer Boolean @default(false)
     createdAt   DateTime @default(now())
     deleted   Boolean  @default(false)
 }

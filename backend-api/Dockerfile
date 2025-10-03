@@ -36,11 +36,22 @@ COPY . .
 # Install project dependencies
 RUN npm ci
 
-# Install Patchright Chromium browser
-RUN npx patchright install chromium
+# Install system dependencies for Chromium (as root)
+RUN npx playwright install-deps chromium
 
 # Build the project
 RUN npm run build
+
+# Ensure runtime directories are owned by the non-root user
+RUN mkdir -p /var/local/sticktock \
+	&& chown -R node:node /usr/src/app /var/local/sticktock
+
+# Switch to node user BEFORE installing browsers so they're owned by node
+USER node
+
+# Install Playwright browsers as the node user
+# This ensures browsers are installed in /home/node/.cache/ms-playwright with correct permissions
+RUN npx playwright install chromium
 
 VOLUME /var/local/sticktock
 
